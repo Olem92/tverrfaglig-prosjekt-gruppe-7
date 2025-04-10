@@ -104,7 +104,48 @@ class App:
             messagebox.showerror("Connection Error", f"Failed to connect to database: {str(e)}")
 
     def show_orders(self):
-        messagebox.showinfo("Orders", "Orders view not implemented yet")
+        # Clear existing content
+        for widget in self.content.winfo_children():
+            widget.destroy()
+
+        # Create frame for Treeview
+        tree_frame = ttk.Frame(self.content)
+        tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Create Treeview with scrollbar
+        tree = ttk.Treeview(tree_frame)
+        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+
+        # Pack the Treeview and scrollbar
+        tree.pack(side="left", fill=tk.BOTH, expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        try:
+            # Get inventory data
+            orders_data = self.db.get_orders()
+            
+            if not orders_data:
+                ttk.Label(tree_frame, text="No inventory data available").pack()
+                return
+
+            # Set up columns based on the first row of data
+            columns = list(orders_data[0].keys())
+            tree["columns"] = columns
+            
+            # Configure the columns
+            tree.column("#0", width=0, stretch=tk.NO)  # Hide the first empty column
+            for col in columns:
+                tree.column(col, anchor=tk.CENTER, width=100)
+                tree.heading(col, text=col.title(), anchor=tk.CENTER)
+
+            # Insert the data
+            for item in orders_data:
+                values = [item[col] for col in columns]
+                tree.insert("", tk.END, values=values)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load orders: {str(e)}")
 
     def show_inventory(self):
         # Clear existing content

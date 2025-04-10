@@ -62,6 +62,19 @@ class VarehusDatabase:
             self.connection.close()
             print("Connection closed")
 
+    def get_orders(self):
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            cursor.callproc('ShowOrders')
+            # Fetch results from the stored procedure
+            for result in cursor.stored_results():
+                return result.fetchall()
+        except Exception as e:
+            print(f"Error fetching orders: {e}")
+            return []
+        finally:
+            cursor.close()
+
     def get_inventory(self):
         try:
             cursor = self.connection.cursor(dictionary=True)
@@ -74,3 +87,4 @@ class VarehusDatabase:
             return []
         finally:
             cursor.close()
+

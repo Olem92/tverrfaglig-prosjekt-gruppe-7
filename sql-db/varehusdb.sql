@@ -262,6 +262,11 @@ DELIMITER $$
 USE `varehusdb`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowInventory`()
 BEGIN
+    SELECT * FROM vare;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowOrders`()
+BEGIN
     SELECT * FROM ordre;
 END$$
 
