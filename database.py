@@ -30,6 +30,33 @@ class VarehusDatabase:
         except Error as e:
             print(e)
 
+    def insert_data(self):
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("INSERT INTO example_table (name) VALUES ('Sample Data')")
+            self.connection.commit()
+            print("Initial data inserted into 'example_table'.")
+        except Error as e:
+            print(f"Error inserting data into table. {e}")
+        finally:
+            cursor.close()
+
+    def delete_data(self, record_id):
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("DELETE FROM example_table WHERE id = %s", (record_id,))
+            deleted_rows = cursor.rowcount
+            self.connection.commit()
+            if deleted_rows > 0:
+                print(f"Deleted {deleted_rows} record(s) with ID {record_id}.")
+            else:
+                print(f"No record found with ID {record_id}.")
+        except Error as e:
+            print(f"Error deleting data from 'example_table': {e}")
+            self.connection.rollback()  # Rollback in case of error
+        finally:
+            cursor.close()
+
     def close(self):
         if self.connection and self.connection.is_connected():
             self.connection.close()
