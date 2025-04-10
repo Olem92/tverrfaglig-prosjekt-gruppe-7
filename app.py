@@ -101,6 +101,10 @@ class App:
     def attempt_connection(self):
         try:
             self.db.connect()
+
+            # Try a ping to confirm the connection is actually alive
+            self.db.connection.ping(reconnect=True)
+
             self.connection_var.set("Successfully connected to varehusdb")
             self.status_label.configure(style="Connected.TLabel")
         except Exception as e:
