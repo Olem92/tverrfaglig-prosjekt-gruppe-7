@@ -48,6 +48,10 @@ class App:
         file_menu.add_command(label="Exit", command=self.root.quit)
 
     def create_main_interface(self):
+
+        # Set current view to None
+        self.current_view = None
+
         # Create main container 
         self.main_frame = ttk.Frame(self.root, padding="10")
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -111,9 +115,6 @@ class App:
         # Clear existing content
         for widget in self.content.winfo_children():
           widget.destroy()
-        
-        # Set current view to inventory
-        self.current_view = None
 
         # Attempt to reconnect to the database
         self.attempt_connection()
