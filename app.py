@@ -66,15 +66,21 @@ class App:
 
         # Connection status
         self.connection_var = tk.StringVar(value="Not connected")
-        status_right = ttk.Label(status_frame, textvariable=self.connection_var)
-        status_right.grid(row=0, column=0, sticky=(tk.E), padx=1)
+        self.status_label = ttk.Label(status_frame, textvariable=self.connection_var)
+        self.status_label.grid(row=0, column=0, sticky=(tk.E), padx=1)
+
+        # Connection style
+        style.configure("Connected.TLabel", foreground="green")
+        style.configure("Disconnected.TLabel", foreground="red")
 
     def attempt_connection(self):
         try:
             self.db.connect()
             self.connection_var.set("Successfully connected to varehusdb")
+            self.status_label.configure(style="Connected.TLabel")
         except Exception as e:
             self.connection_var.set("Not connected")
+            self.status_label.configure(style="Disconnected.TLabel")
             messagebox.showerror("Connection Error", f"Failed to connect to database: {str(e)}")
 
     def show_orders(self):
