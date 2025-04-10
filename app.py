@@ -9,9 +9,6 @@ class App:
         self.root = tk.Tk()
         self.root.title("Varehus Overview")
         self.root.geometry("800x600")
-
-        # Track the current view (used for Refresh function)
-        self.current_view = None
         
         # Add keyboard event bindings
         self.root.bind('<Key>', self.handle_keypress)  # Bind all keypresses
@@ -49,7 +46,7 @@ class App:
 
     def create_main_interface(self):
 
-        # Set current view to None
+        # Set current view to None (used for refresh function)
         self.current_view = None
 
         # Create main container 
@@ -116,11 +113,11 @@ class App:
         for widget in self.content.winfo_children():
           widget.destroy()
 
-        # Attempt to reconnect to the database
-        self.attempt_connection()
-
         # Recreate the main interface
         self.create_main_interface()
+
+        # Attempt to reconnect to the database
+        self.attempt_connection()
 
     def show_orders(self):
         # Clear existing content
