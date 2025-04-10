@@ -55,15 +55,17 @@ class App:
         self.main_frame.columnconfigure(0, weight=1)
         self.main_frame.rowconfigure(1, weight=1)  # Content area should expand
 
-        # Top menu bar
+        # Top menu bar grid
         menu_bar = ttk.Frame(self.main_frame)
         menu_bar.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
-        # Menu buttons i topp av program
-        ttk.Button(menu_bar, text="Refresh", command=self.refresh_view).pack(side=tk.RIGHT, padx=2)
+        # Menu buttons left
         ttk.Button(menu_bar, text="Orders", command=self.show_orders).pack(side=tk.LEFT, padx=2)
-        ttk.Button(menu_bar, text="Inventory", command=self.show_inventory).pack(side=tk.LEFT, padx=2)        
-
+        ttk.Button(menu_bar, text="Inventory", command=self.show_inventory).pack(side=tk.LEFT, padx=2)
+        
+        # Menu buttons right
+        ttk.Button(menu_bar, text="Refresh", command=self.refresh_view).pack(side=tk.RIGHT, padx=2)
+        
         # Main content area
         self.content = ttk.Frame(self.main_frame)
         self.content.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -105,7 +107,48 @@ class App:
         messagebox.showinfo("Orders", "Orders view not implemented yet")
 
     def show_inventory(self):
-        messagebox.showinfo("Inventory", "Inventory view not implemented yet")    
+        # Clear existing content
+        for widget in self.content.winfo_children():
+            widget.destroy()
+
+        # Create frame for Treeview
+        tree_frame = ttk.Frame(self.content)
+        tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Create Treeview with scrollbar
+        tree = ttk.Treeview(tree_frame)
+        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+
+        # Pack the Treeview and scrollbar
+        tree.pack(side="left", fill=tk.BOTH, expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        try:
+            # Get inventory data
+            inventory_data = self.db.get_inventory()
+            
+            if not inventory_data:
+                ttk.Label(tree_frame, text="No inventory data available").pack()
+                return
+
+            # Set up columns based on the first row of data
+            columns = list(inventory_data[0].keys())
+            tree["columns"] = columns
+            
+            # Configure the columns
+            tree.column("#0", width=0, stretch=tk.NO)  # Hide the first empty column
+            for col in columns:
+                tree.column(col, anchor=tk.CENTER, width=100)
+                tree.heading(col, text=col.title(), anchor=tk.CENTER)
+
+            # Insert the data
+            for item in inventory_data:
+                values = [item[col] for col in columns]
+                tree.insert("", tk.END, values=values)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load inventory: {str(e)}")
 
     def refresh_view(self):
         messagebox.showinfo("Refresh", "Refresh functionality not implemented yet")

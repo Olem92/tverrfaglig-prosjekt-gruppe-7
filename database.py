@@ -61,3 +61,16 @@ class VarehusDatabase:
         if self.connection and self.connection.is_connected():
             self.connection.close()
             print("Connection closed")
+
+    def get_inventory(self):
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            cursor.callproc('ShowInventory')
+            # Fetch results from the stored procedure
+            for result in cursor.stored_results():
+                return result.fetchall()
+        except Exception as e:
+            print(f"Error fetching inventory: {e}")
+            return []
+        finally:
+            cursor.close()
