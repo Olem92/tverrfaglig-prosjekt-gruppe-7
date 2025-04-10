@@ -41,9 +41,10 @@ class App:
         menu_bar = ttk.Frame(self.main_frame)
         menu_bar.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
-        # Menu buttons
-        ttk.Button(menu_bar, text="Refresh", command=self.refresh_view).pack(side=tk.LEFT, padx=2)
+        # Menu buttons i topp av program
+        ttk.Button(menu_bar, text="Refresh", command=self.refresh_view).pack(side=tk.RIGHT, padx=2)
         ttk.Button(menu_bar, text="Orders", command=self.show_orders).pack(side=tk.LEFT, padx=2)
+        ttk.Button(menu_bar, text="Inventory", command=self.show_inventory).pack(side=tk.LEFT, padx=2)        
 
         # Main content area
         self.content = ttk.Frame(self.main_frame)
@@ -65,7 +66,7 @@ class App:
 
         # Connection status
         self.connection_var = tk.StringVar(value="Not connected")
-        status_right = ttk.Label(status_frame, textvariable=self.connection_var, relief="sunken")
+        status_right = ttk.Label(status_frame, textvariable=self.connection_var)
         status_right.grid(row=0, column=0, sticky=(tk.E), padx=1)
 
     def attempt_connection(self):
@@ -78,6 +79,9 @@ class App:
 
     def show_orders(self):
         messagebox.showinfo("Orders", "Orders view not implemented yet")
+
+    def show_inventory(self):
+        messagebox.showinfo("Inventory", "Inventory view not implemented yet")    
 
     def refresh_view(self):
         messagebox.showinfo("Refresh", "Refresh functionality not implemented yet")
