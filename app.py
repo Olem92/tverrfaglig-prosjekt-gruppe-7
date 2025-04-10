@@ -9,6 +9,9 @@ class App:
         self.root = tk.Tk()
         self.root.title("Varehus Overview")
         self.root.geometry("800x600")
+
+        # Track the current view (used for Refresh function)
+        self.current_view = None
         
         # Add keyboard event bindings
         self.root.bind('<Key>', self.handle_keypress)  # Bind all keypresses
@@ -60,6 +63,7 @@ class App:
         menu_bar.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
         # Menu buttons left
+        ttk.Button(menu_bar, text="Home", command=self.reload_app).pack(side=tk.LEFT, padx=2)
         ttk.Button(menu_bar, text="Orders", command=self.show_orders).pack(side=tk.LEFT, padx=2)
         ttk.Button(menu_bar, text="Inventory", command=self.show_inventory).pack(side=tk.LEFT, padx=2)
         
@@ -103,10 +107,27 @@ class App:
             self.status_label.configure(style="Disconnected.TLabel")
             messagebox.showerror("Connection Error", f"Failed to connect to database: {str(e)}")
 
+    def reload_app(self):
+        # Clear existing content
+        for widget in self.content.winfo_children():
+          widget.destroy()
+        
+        # Set current view to inventory
+        self.current_view = None
+
+        # Attempt to reconnect to the database
+        self.attempt_connection()
+
+        # Recreate the main interface
+        self.create_main_interface()
+
     def show_orders(self):
         # Clear existing content
         for widget in self.content.winfo_children():
             widget.destroy()
+
+        # Set current view to orders
+        self.current_view = "orders"
 
         # Create frame for Treeview
         tree_frame = ttk.Frame(self.content)
@@ -152,6 +173,9 @@ class App:
         for widget in self.content.winfo_children():
             widget.destroy()
 
+        # Set current view to inventory
+        self.current_view = "inventory"
+
         # Create frame for Treeview
         tree_frame = ttk.Frame(self.content)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -192,7 +216,12 @@ class App:
             messagebox.showerror("Error", f"Failed to load inventory: {str(e)}")
 
     def refresh_view(self):
-        messagebox.showinfo("Refresh", "Refresh functionality not implemented yet")
+        if self.current_view == "orders":  # <--- Added to check current view
+            self.show_orders()  # Refresh orders view
+        elif self.current_view == "inventory":  # <--- Added to check current view
+            self.show_inventory()  # Refresh inventory view
+        else:
+            messagebox.showinfo("Refresh", "No active view to refresh.")  # <--- Added to handle no active view
 
     def start(self):
         print("Starting the app")
