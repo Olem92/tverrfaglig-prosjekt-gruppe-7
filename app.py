@@ -10,10 +10,28 @@ class App:
         self.root.title("Varehus Overview")
         self.root.geometry("800x600")
         
+        # Add keyboard event bindings
+        self.root.bind('<Key>', self.handle_keypress)  # Bind all keypresses
+
         self.create_menu()
         self.create_main_interface()
         # Attempt to connect on startup
         self.attempt_connection()
+
+    def handle_keypress(self, event):
+        # F5 = Refresh
+        if event.keysym == 'F5':
+            self.refresh_view()
+        
+        # Ctrl+O = Orders
+        elif event.keysym.lower() == 'o' and (event.state & 0x0004):  # 0x0004 = Control key
+            self.show_orders()
+        
+        # Ctrl+I = Inventory
+        elif event.keysym.lower() == 'i' and (event.state & 0x0004):
+            self.show_inventory()
+        
+        return 'break'  # Stop event propagation
 
     def create_menu(self):
         menubar = tk.Menu(self.root)
