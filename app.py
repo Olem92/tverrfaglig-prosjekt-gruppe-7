@@ -1,7 +1,6 @@
 from database import VarehusDatabase
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import ttk
+from tkinter import messagebox, ttk
 
 class App:
     def __init__(self):
@@ -131,6 +130,14 @@ class App:
         # Set current view to orders
         self.current_view = "orders"
 
+        # Search bar
+        search_frame = ttk.Frame(self.content)
+        search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
+
+        search_var = tk.StringVar()
+        search_entry = ttk.Entry(search_frame, textvariable=search_var)
+        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
         # Create frame for Treeview
         tree_frame = ttk.Frame(self.content)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -167,6 +174,13 @@ class App:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
 
+            # Search button
+            search_button = ttk.Button(
+                search_frame, text="Search",
+                command=lambda: self.filter_tree(tree, orders_data, search_var.get())
+            )
+            search_button.pack(side=tk.LEFT, padx=(5, 0))
+
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load orders: {str(e)}")
 
@@ -177,6 +191,14 @@ class App:
 
         # Set current view to inventory
         self.current_view = "inventory"
+
+        # Search bar
+        search_frame = ttk.Frame(self.content)
+        search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
+
+        search_var = tk.StringVar()
+        search_entry = ttk.Entry(search_frame, textvariable=search_var)
+        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         # Create frame for Treeview
         tree_frame = ttk.Frame(self.content)
@@ -214,8 +236,24 @@ class App:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
 
+            # Search button
+            search_button = ttk.Button(
+                search_frame, text="Search",
+                command=lambda: self.filter_tree(tree, inventory_data, search_var.get())
+            )
+            search_button.pack(side=tk.LEFT, padx=(5, 0))
+
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load inventory: {str(e)}")
+
+    # Filter function for search bar
+    def filter_tree(self, tree, data, query):
+        query = query.lower()
+        tree.delete(*tree.get_children())
+        for item in data:
+            if any(query in str(value).lower() for value in item.values()):
+                values = [item[col] for col in tree["columns"]]
+                tree.insert("", tk.END, values=values)
 
     def refresh_view(self):
         if self.current_view == "orders":  # <--- Added to check current view
