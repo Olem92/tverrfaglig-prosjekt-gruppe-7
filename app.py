@@ -135,8 +135,13 @@ class App:
         search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
 
         search_var = tk.StringVar()
+        selected_column = tk.StringVar(value="All")
+
         search_entry = ttk.Entry(search_frame, textvariable=search_var)
         search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")
+        column_dropdown.pack(side=tk.LEFT, padx=(5, 0))
 
         # Create frame for Treeview
         tree_frame = ttk.Frame(self.content)
@@ -163,6 +168,9 @@ class App:
             columns = list(orders_data[0].keys())
             tree["columns"] = columns
             
+            # Dropdown list
+            column_dropdown["values"] = ["All"] + columns
+
             # Configure the columns
             tree.column("#0", width=0, stretch=tk.NO)  # Hide the first empty column
             for col in columns:
@@ -174,12 +182,13 @@ class App:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
 
-            # Search button
-            search_button = ttk.Button(
-                search_frame, text="Search",
-                command=lambda: self.filter_tree(tree, orders_data, search_var.get())
-            )
-            search_button.pack(side=tk.LEFT, padx=(5, 0))
+            # Search function
+            def on_search_change(*_):
+                col = selected_column.get()
+                self.filter_tree(tree, orders_data, search_var.get(), column=None if col == "All" else col)
+
+            search_var.trace_add("write", on_search_change)
+            selected_column.trace_add("write", on_search_change)
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load orders: {str(e)}")
@@ -197,8 +206,13 @@ class App:
         search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
 
         search_var = tk.StringVar()
+        selected_column = tk.StringVar(value="All")
+
         search_entry = ttk.Entry(search_frame, textvariable=search_var)
         search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")
+        column_dropdown.pack(side=tk.LEFT, padx=(5, 0))
 
         # Create frame for Treeview
         tree_frame = ttk.Frame(self.content)
@@ -224,6 +238,9 @@ class App:
             # Set up columns based on the first row of data
             columns = list(inventory_data[0].keys())
             tree["columns"] = columns
+
+            # Dropdown list
+            column_dropdown["values"] = ["All"] + columns
             
             # Configure the columns
             tree.column("#0", width=0, stretch=tk.NO)  # Hide the first empty column
@@ -237,23 +254,41 @@ class App:
                 tree.insert("", tk.END, values=values)
 
             # Search button
-            search_button = ttk.Button(
-                search_frame, text="Search",
-                command=lambda: self.filter_tree(tree, inventory_data, search_var.get())
-            )
-            search_button.pack(side=tk.LEFT, padx=(5, 0))
+            def on_search_change(*_):
+                col = selected_column.get()
+                self.filter_tree(tree, inventory_data, search_var.get(), column=None if col == "All" else col)
+
+            search_var.trace_add("write", on_search_change)
+            selected_column.trace_add("write", on_search_change)
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load inventory: {str(e)}")
 
     # Filter function for search bar
-    def filter_tree(self, tree, data, query):
+    def filter_tree(self, tree, data, query, column=None):
         query = query.lower()
         tree.delete(*tree.get_children())
+
+        if not query:
+            tree.tag_configure("match", background="")  # Reset match tag
+        else:
+            tree.tag_configure("match", background="#ffff99")  # Highlight color
+
         for item in data:
-            if any(query in str(value).lower() for value in item.values()):
-                values = [item[col] for col in tree["columns"]]
-                tree.insert("", tk.END, values=values)
+            values = [item[col] for col in tree["columns"]]
+            should_display = False
+
+            if not query:
+                should_display = True
+            elif column and query in str(item[column]).lower():
+                should_display = True
+            elif not column and any(query in str(val).lower() for val in item.values()):
+                should_display = True
+
+            if should_display:
+                item_id = tree.insert("", tk.END, values=values)
+                if query and any(query in str(val).lower() for val in values):
+                    tree.item(item_id, tags=("match",))
 
     def refresh_view(self):
         if self.current_view == "orders":  # <--- Added to check current view
