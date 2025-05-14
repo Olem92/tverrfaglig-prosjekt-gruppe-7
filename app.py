@@ -385,14 +385,15 @@ class App:
                     tree.item(item_id, tags=("match",))
 
     def refresh_view(self):
-        if self.current_view == "orders":
-            self.show_orders()
-        elif self.current_view == "inventory":
-            self.show_inventory()
-        elif self.current_view == "contacts":
-            self.show_contacts()
+        if self.current_view == "orders":  # Checks the current view
+            self.show_orders()  # Refreshes orders view
+        elif self.current_view == "inventory":  # Checks the current view
+            self.show_inventory()  # Refreshes inventory view
+        elif self.current_view == "contacts": # Checks the current view
+            self.show_contacts() # Refreshes contacts view
         else:
             messagebox.showinfo("Refresh", "No active view to refresh.")
+
 
     def start(self):
         print("Starting the app")
