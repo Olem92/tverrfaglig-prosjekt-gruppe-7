@@ -88,3 +88,33 @@ class VarehusDatabase:
         finally:
             cursor.close()
 
+    def get_contacts(self):
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM kunde")
+            return cursor.fetchall()
+        except Exception as e:
+            print(f"Error fetching contacts: {e}")
+            return []
+        finally:
+            cursor.close()
+
+    def get_order_contents(self, order_id):
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            # Join with vare for item name, using correct column name for item name
+
+            query = ("SELECT v.Betegnelse AS VareNavn, ol.VNr, ol.Antall, ol.PrisPrEnhet "
+                     "FROM ordrelinje AS ol "        ## ol. her er table ordrelinje!!
+                     "JOIN vare v ON ol.VNr = v.VNr "
+                     "WHERE ol.OrdreNr = %s")
+            
+            cursor.execute(query, (order_id,))
+            return cursor.fetchall()
+        
+        except Exception as e:
+            print(f"Error fetching order contents: {e}")
+            return []
+        finally:
+            cursor.close()
+
