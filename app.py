@@ -65,18 +65,18 @@ class App:
         menu_bar.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
         # Menu buttons left
-        # Detect text color from style (default to white for dark mode)
+        # Detect text color from style (default to black if not found)
         style = ttk.Style()
         text_color = style.lookup("TLabel", "foreground")
-        # If no color found, default to white
-        if not text_color or text_color in ("", "SystemWindowText"):
-            text_color = "#FFFFFF"
+        # If not a hex color, fallback to black (works for Windows classic theme)
+        if not text_color or not str(text_color).startswith("#"):
+            text_color = "#000000"
         # Convert color to RGB tuple
         def hex_to_rgb(value):
             value = value.lstrip('#')
             lv = len(value)
             return tuple(int(value[i:i+lv//3], 16) for i in range(0, lv, lv//3))
-        rgb = hex_to_rgb(text_color) if text_color.startswith('#') else (255, 255, 255)
+        rgb = hex_to_rgb(text_color)
         # Load and colorize icons
         home_img = Image.open(os.path.join(os.path.dirname(__file__), "icons", "home.png")).convert("RGBA").resize((18, 18), Image.LANCZOS)
         refresh_img = Image.open(os.path.join(os.path.dirname(__file__), "icons", "refresh.png")).convert("RGBA").resize((18, 18), Image.LANCZOS)
@@ -161,6 +161,17 @@ class App:
         # Attempt to reconnect to the database
         self.attempt_connection()
 
+    def bind_treeview_double_click(self, tree, columns, callback):
+        # Generic double-click binding for any Treeview
+        def on_double_click(event):
+            selected = tree.focus()
+            if not selected:
+                return
+            item_data = tree.item(selected)['values']
+            item_dict = dict(zip(columns, item_data))
+            callback(item_dict)
+        tree.bind("<Double-1>", on_double_click)
+
     def show_orders(self):
         # Clear existing content
         for widget in self.content.winfo_children():
@@ -221,15 +232,11 @@ class App:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
 
-            # Double-click event to show order contents
-            def on_order_double_click(event):
-                selected = tree.focus()
-                if not selected:
-                    return
-                item = tree.item(selected)
-                order_id = item['values'][0]  # Assumes first column is order_id
-                self.show_order_contents(order_id)
-            tree.bind("<Double-1>", on_order_double_click)
+            # Use generic double-click binding
+            self.bind_treeview_double_click(
+                tree, columns,
+                lambda item_dict: self.show_order_details_popup(item_dict)
+            )
 
             # Search function
             def on_search_change(*_):
@@ -241,6 +248,22 @@ class App:
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load orders: {str(e)}")
+
+    def show_order_details_popup(self, order_dict):
+        # Popup with all order details and a button to show order contents
+        win = tk.Toplevel(self.root)
+        win.title("Order Details")
+        frame = ttk.Frame(win, padding=10)
+        frame.pack(fill=tk.BOTH, expand=True)
+        for key, value in order_dict.items():
+            row = ttk.Frame(frame)
+            row.pack(fill=tk.X, pady=2)
+            ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
+            ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
+        # Add button to show order contents
+        order_id = list(order_dict.values())[0]  # Assumes first column is order_id
+        btn = ttk.Button(frame, text="Show Order Contents", command=lambda: self.show_order_contents(order_id))
+        btn.pack(pady=10)
 
     def show_inventory(self):
         # Clear existing content
@@ -302,6 +325,12 @@ class App:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
 
+            # Use generic double-click binding
+            self.bind_treeview_double_click(
+                tree, columns,
+                lambda item_dict: self.show_details_popup("Inventory Item Details", item_dict)
+            )
+
             # Search button
             def on_search_change(*_):
                 col = selected_column.get()
@@ -320,6 +349,19 @@ class App:
 
         self.current_view = "contacts"
 
+        # Search bar
+        search_frame = ttk.Frame(self.content)
+        search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
+
+        search_var = tk.StringVar()
+        selected_column = tk.StringVar(value="All")
+
+        search_entry = ttk.Entry(search_frame, textvariable=search_var)
+        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")
+        column_dropdown.pack(side=tk.LEFT, padx=(5, 0))
+
         # Create frame for Treeview
         tree_frame = ttk.Frame(self.content)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -337,13 +379,30 @@ class App:
                 return
             columns = list(contacts_data[0].keys())
             tree["columns"] = columns
+            column_dropdown["values"] = ["All"] + columns
             tree.column("#0", width=0, stretch=tk.NO)
+            
             for col in columns:
                 tree.column(col, anchor=tk.CENTER, width=100)
                 tree.heading(col, text=col.title(), anchor=tk.CENTER)
+
             for item in contacts_data:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
+            
+            # Use generic double-click binding
+            self.bind_treeview_double_click(
+                tree, columns,
+                lambda item_dict: self.show_details_popup("Contact Details", item_dict)
+            )
+            
+            # Search function for contacts
+            def on_search_change(*_):
+                col = selected_column.get()
+                self.filter_tree(tree, contacts_data, search_var.get(), column=None if col == "All" else col)
+            search_var.trace_add("write", on_search_change)
+            selected_column.trace_add("write", on_search_change)
+
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load contacts: {str(e)}")
 
@@ -432,6 +491,17 @@ class App:
         else:
             messagebox.showinfo("Refresh", "No active view to refresh.")
 
+    def show_details_popup(self, title, item_dict):
+        # Generic popup for showing all details of a record
+        win = tk.Toplevel(self.root)
+        win.title(title)
+        frame = ttk.Frame(win, padding=10)
+        frame.pack(fill=tk.BOTH, expand=True)
+        for key, value in item_dict.items():
+            row = ttk.Frame(frame)
+            row.pack(fill=tk.X, pady=2)
+            ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
+            ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
 
     def start(self):
         print("Starting the app")
