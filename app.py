@@ -1,6 +1,7 @@
 from database import VarehusDatabase
 import tkinter as tk
 from tkinter import messagebox, ttk
+from PIL import Image, ImageTk
 
 class App:
     def __init__(self):
@@ -63,13 +64,49 @@ class App:
         menu_bar.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
         # Menu buttons left
-        ttk.Button(menu_bar, text="Home", command=self.reload_app).pack(side=tk.LEFT, padx=2)
+        # Detect text color from style (default to white for dark mode)
+        style = ttk.Style()
+        text_color = style.lookup("TLabel", "foreground")
+        # If no color found, default to white
+        if not text_color or text_color in ("", "SystemWindowText"):
+            text_color = "#FFFFFF"
+        # Convert color to RGB tuple
+        def hex_to_rgb(value):
+            value = value.lstrip('#')
+            lv = len(value)
+            return tuple(int(value[i:i+lv//3], 16) for i in range(0, lv, lv//3))
+        rgb = hex_to_rgb(text_color) if text_color.startswith('#') else (255, 255, 255)
+        # Load and colorize icons
+        home_img = Image.open("icons/home.png").convert("RGBA").resize((18, 18), Image.LANCZOS)
+        refresh_img = Image.open("icons/refresh.png").convert("RGBA").resize((18, 18), Image.LANCZOS)
+        def colorize_icon(img, rgb):
+            datas = img.getdata()
+            newData = []
+            for item in datas:
+                # Only colorize non-transparent pixels
+                if item[3] > 0:
+                    newData.append((rgb[0], rgb[1], rgb[2], item[3]))
+                else:
+                    newData.append(item)
+            img.putdata(newData)
+            return img
+        home_img = colorize_icon(home_img, rgb)
+        refresh_img = colorize_icon(refresh_img, rgb)
+        home_icon = ImageTk.PhotoImage(home_img)
+        refresh_icon = ImageTk.PhotoImage(refresh_img)
+        home_btn = ttk.Button(menu_bar, image=home_icon, command=self.reload_app)
+        home_btn.pack(side=tk.LEFT, padx=6, pady=4, ipadx=4, ipady=2)
+
+        
         ttk.Button(menu_bar, text="Orders", command=self.show_orders).pack(side=tk.LEFT, padx=2)
         ttk.Button(menu_bar, text="Inventory", command=self.show_inventory).pack(side=tk.LEFT, padx=2)
         ttk.Button(menu_bar, text="Contacts", command=self.show_contacts).pack(side=tk.LEFT, padx=2)
-        
         # Menu buttons right
-        ttk.Button(menu_bar, text="Refresh", command=self.refresh_view).pack(side=tk.RIGHT, padx=2)
+        refresh_btn = ttk.Button(menu_bar, image=refresh_icon, command=self.refresh_view)
+        refresh_btn.pack(side=tk.RIGHT, padx=6, pady=4, ipadx=4, ipady=2)
+        # Store references to icons to prevent garbage collection
+        self.home_icon = home_icon
+        self.refresh_icon = refresh_icon
         
         # Main content area
         self.content = ttk.Frame(self.main_frame)
