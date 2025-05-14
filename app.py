@@ -2,6 +2,7 @@ from database import VarehusDatabase
 import tkinter as tk
 from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
+import os
 
 class App:
     def __init__(self):
@@ -77,8 +78,8 @@ class App:
             return tuple(int(value[i:i+lv//3], 16) for i in range(0, lv, lv//3))
         rgb = hex_to_rgb(text_color) if text_color.startswith('#') else (255, 255, 255)
         # Load and colorize icons
-        home_img = Image.open("icons/home.png").convert("RGBA").resize((18, 18), Image.LANCZOS)
-        refresh_img = Image.open("icons/refresh.png").convert("RGBA").resize((18, 18), Image.LANCZOS)
+        home_img = Image.open(os.path.join(os.path.dirname(__file__), "icons", "home.png")).convert("RGBA").resize((18, 18), Image.LANCZOS)
+        refresh_img = Image.open(os.path.join(os.path.dirname(__file__), "icons", "refresh.png")).convert("RGBA").resize((18, 18), Image.LANCZOS)
         def colorize_icon(img, rgb):
             datas = img.getdata()
             newData = []
