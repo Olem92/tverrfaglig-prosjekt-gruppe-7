@@ -6,7 +6,7 @@ class App:
     def __init__(self):
         self.db = VarehusDatabase()
         self.root = tk.Tk()
-        self.root.title("Varehus Overview")
+        self.root.title("Warehouse Mini CRM")
         self.root.geometry("800x600")
         
         # Add keyboard event bindings
@@ -66,6 +66,7 @@ class App:
         ttk.Button(menu_bar, text="Home", command=self.reload_app).pack(side=tk.LEFT, padx=2)
         ttk.Button(menu_bar, text="Orders", command=self.show_orders).pack(side=tk.LEFT, padx=2)
         ttk.Button(menu_bar, text="Inventory", command=self.show_inventory).pack(side=tk.LEFT, padx=2)
+        ttk.Button(menu_bar, text="Contacts", command=self.show_contacts).pack(side=tk.LEFT, padx=2)
         
         # Menu buttons right
         ttk.Button(menu_bar, text="Refresh", command=self.refresh_view).pack(side=tk.RIGHT, padx=2)
@@ -75,13 +76,13 @@ class App:
         self.content.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Default welcome content
-        welcome_label = ttk.Label(self.content, text="Welcome to Varehus System")
+        welcome_label = ttk.Label(self.content, text="Welcome to Warehouse Mini CRM System")
         welcome_label.pack(pady=20)
         style = ttk.Style()
         style.configure("Welcome.TLabel", font=('Helvetica', 16))
         welcome_label.configure(style="Welcome.TLabel")
         
-        ttk.Label(self.content, text="Click Orders to view all orders").pack()
+        ttk.Label(self.content, text="Write something usefull here").pack()
 
         # Status bar (connection info only)
         status_frame = ttk.Frame(self.root)
@@ -182,6 +183,16 @@ class App:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
 
+            # Double-click event to show order contents
+            def on_order_double_click(event):
+                selected = tree.focus()
+                if not selected:
+                    return
+                item = tree.item(selected)
+                order_id = item['values'][0]  # Assumes first column is order_id
+                self.show_order_contents(order_id)
+            tree.bind("<Double-1>", on_order_double_click)
+
             # Search function
             def on_search_change(*_):
                 col = selected_column.get()
@@ -264,6 +275,89 @@ class App:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load inventory: {str(e)}")
 
+    def show_contacts(self):
+        # Clear existing content
+        for widget in self.content.winfo_children():
+            widget.destroy()
+
+        self.current_view = "contacts"
+
+        # Create frame for Treeview
+        tree_frame = ttk.Frame(self.content)
+        tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        tree = ttk.Treeview(tree_frame)
+        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+        tree.pack(side="left", fill=tk.BOTH, expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        try:
+            contacts_data = self.db.get_contacts()  # Use get_contacts, not get_clients
+            if not contacts_data:
+                ttk.Label(tree_frame, text="No contact data available").pack()
+                return
+            columns = list(contacts_data[0].keys())
+            tree["columns"] = columns
+            tree.column("#0", width=0, stretch=tk.NO)
+            for col in columns:
+                tree.column(col, anchor=tk.CENTER, width=100)
+                tree.heading(col, text=col.title(), anchor=tk.CENTER)
+            for item in contacts_data:
+                values = [item[col] for col in columns]
+                tree.insert("", tk.END, values=values)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load contacts: {str(e)}")
+
+    def show_order_contents(self, order_id):
+        # Show a dialog with the contents of the order
+        try:
+            contents = self.db.get_order_contents(order_id)
+            if not contents:
+                messagebox.showinfo("Order Contents", "No contents found for this order.")
+                return
+            win = tk.Toplevel(self.root)
+            win.title(f"Order {order_id}")
+            frame = ttk.Frame(win, padding=10)
+            frame.pack(fill=tk.BOTH, expand=True)
+            tree = ttk.Treeview(frame)
+            tree.pack(fill=tk.BOTH, expand=True)
+            columns = ["Item", "Item Number", "Quantity", "Price per Item", "Price total"]
+            tree["columns"] = columns
+            tree.column("#0", width=0, stretch=tk.NO)
+            tree.column("Item", anchor=tk.W, width=200)
+            tree.heading("Item", text="Item", anchor=tk.W)
+            for col in columns[1:]:
+                tree.column(col, anchor=tk.CENTER, width=120)
+                tree.heading(col, text=col, anchor=tk.CENTER)
+            for item in contents:
+                # Map DB fields to display columns
+                item_name = item.get("VareNavn") or item.get("Betegnelse") or item.get("Item") or ""
+                part_number = item.get("VNr") or item.get("ol.VNr") or item.get("Item Number") or ""
+                quantity = item.get("Antall") or item.get("Quantity") or 0
+                price_per_item = (
+                    item.get("PrisPrEnhet") or item.get("PrisprEnhet") or item.get("PrisEnhet") or item.get("Price per Item") or 0
+                )
+                try:
+                    quantity_val = float(quantity)
+                except Exception:
+                    quantity_val = 0
+                try:
+                    price_per_item_val = float(price_per_item)
+                except Exception:
+                    price_per_item_val = 0
+                price_total = price_per_item_val * quantity_val
+                values = [
+                    str(item_name),
+                    str(part_number),
+                    int(quantity_val) if quantity_val == int(quantity_val) else quantity_val,
+                    f"{price_per_item_val:,.2f}",
+                    f"{price_total:,.2f}"
+                ]
+                tree.insert("", tk.END, values=values)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load order contents: {str(e)}")
+
     # Filter function for search bar
     def filter_tree(self, tree, data, query, column=None):
         query = query.lower()
@@ -291,12 +385,14 @@ class App:
                     tree.item(item_id, tags=("match",))
 
     def refresh_view(self):
-        if self.current_view == "orders":  # <--- Added to check current view
-            self.show_orders()  # Refresh orders view
-        elif self.current_view == "inventory":  # <--- Added to check current view
-            self.show_inventory()  # Refresh inventory view
+        if self.current_view == "orders":
+            self.show_orders()
+        elif self.current_view == "inventory":
+            self.show_inventory()
+        elif self.current_view == "contacts":
+            self.show_contacts()
         else:
-            messagebox.showinfo("Refresh", "No active view to refresh.")  # <--- Added to handle no active view
+            messagebox.showinfo("Refresh", "No active view to refresh.")
 
     def start(self):
         print("Starting the app")
