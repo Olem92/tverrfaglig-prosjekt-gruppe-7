@@ -3,6 +3,9 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
 import os
+from views.orders_view import OrdersView
+from views.inventory_view import InventoryView
+from views.contacts_view import ContactsView
 
 class App:
     def __init__(self):
@@ -10,6 +13,9 @@ class App:
         self.root = tk.Tk()
         self.root.title("Warehouse Mini CRM")
         self.root.geometry("800x600")
+        self.orders_view = OrdersView(self)
+        self.inventory_view = InventoryView(self)
+        self.contacts_view = ContactsView(self)
         
         # Add keyboard event bindings
         self.root.bind('<Key>', self.handle_keypress)  # Bind all keypresses
@@ -173,238 +179,13 @@ class App:
         tree.bind("<Double-1>", on_double_click)
 
     def show_orders(self):
-        # Clear existing content
-        for widget in self.content.winfo_children():
-            widget.destroy()
-
-        # Set current view to orders
-        self.current_view = "orders"
-
-        # Search bar
-        search_frame = ttk.Frame(self.content)
-        search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
-
-        search_var = tk.StringVar()
-        selected_column = tk.StringVar(value="All")
-
-        search_entry = ttk.Entry(search_frame, textvariable=search_var)
-        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-        column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")
-        column_dropdown.pack(side=tk.LEFT, padx=(5, 0))
-
-        # Create frame for Treeview
-        tree_frame = ttk.Frame(self.content)
-        tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # Create Treeview with scrollbar
-        tree = ttk.Treeview(tree_frame)
-        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
-        tree.configure(yscrollcommand=scrollbar.set)
-
-        # Pack the Treeview and scrollbar
-        tree.pack(side="left", fill=tk.BOTH, expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-        try:
-            # Get inventory data
-            orders_data = self.db.get_orders()
-            
-            if not orders_data:
-                ttk.Label(tree_frame, text="No inventory data available").pack()
-                return
-
-            # Set up columns based on the first row of data
-            columns = list(orders_data[0].keys())
-            tree["columns"] = columns
-            
-            # Dropdown list
-            column_dropdown["values"] = ["All"] + columns
-
-            # Configure the columns
-            tree.column("#0", width=0, stretch=tk.NO)  # Hide the first empty column
-            for col in columns:
-                tree.column(col, anchor=tk.CENTER, width=100)
-                tree.heading(col, text=col.title(), anchor=tk.CENTER)
-
-            # Insert the data
-            for item in orders_data:
-                values = [item[col] for col in columns]
-                tree.insert("", tk.END, values=values)
-
-            # Use generic double-click binding
-            self.bind_treeview_double_click(
-                tree, columns,
-                lambda item_dict: self.show_order_details_popup(item_dict)
-            )
-
-            # Search function
-            def on_search_change(*_):
-                col = selected_column.get()
-                self.filter_tree(tree, orders_data, search_var.get(), column=None if col == "All" else col)
-
-            search_var.trace_add("write", on_search_change)
-            selected_column.trace_add("write", on_search_change)
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load orders: {str(e)}")
-
-    def show_order_details_popup(self, order_dict):
-        # Popup with all order details and a button to show order contents
-        win = tk.Toplevel(self.root)
-        win.title("Order Details")
-        frame = ttk.Frame(win, padding=10)
-        frame.pack(fill=tk.BOTH, expand=True)
-        for key, value in order_dict.items():
-            row = ttk.Frame(frame)
-            row.pack(fill=tk.X, pady=2)
-            ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
-            ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
-        # Add button to show order contents
-        order_id = list(order_dict.values())[0]  # Assumes first column is order_id
-        btn = ttk.Button(frame, text="Show Order Contents", command=lambda: self.show_order_contents(order_id))
-        btn.pack(pady=10)
+        self.orders_view.show()
 
     def show_inventory(self):
-        # Clear existing content
-        for widget in self.content.winfo_children():
-            widget.destroy()
-
-        # Set current view to inventory
-        self.current_view = "inventory"
-
-        # Search bar
-        search_frame = ttk.Frame(self.content)
-        search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
-
-        search_var = tk.StringVar()
-        selected_column = tk.StringVar(value="All")
-
-        search_entry = ttk.Entry(search_frame, textvariable=search_var)
-        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-        column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")
-        column_dropdown.pack(side=tk.LEFT, padx=(5, 0))
-
-        # Create frame for Treeview
-        tree_frame = ttk.Frame(self.content)
-        tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # Create Treeview with scrollbar
-        tree = ttk.Treeview(tree_frame)
-        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
-        tree.configure(yscrollcommand=scrollbar.set)
-
-        # Pack the Treeview and scrollbar
-        tree.pack(side="left", fill=tk.BOTH, expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-        try:
-            # Get inventory data
-            inventory_data = self.db.get_inventory()
-            
-            if not inventory_data:
-                ttk.Label(tree_frame, text="No inventory data available").pack()
-                return
-
-            # Set up columns based on the first row of data
-            columns = list(inventory_data[0].keys())
-            tree["columns"] = columns
-
-            # Dropdown list
-            column_dropdown["values"] = ["All"] + columns
-            
-            # Configure the columns
-            tree.column("#0", width=0, stretch=tk.NO)  # Hide the first empty column
-            for col in columns:
-                tree.column(col, anchor=tk.CENTER, width=100)
-                tree.heading(col, text=col.title(), anchor=tk.CENTER)
-
-            # Insert the data
-            for item in inventory_data:
-                values = [item[col] for col in columns]
-                tree.insert("", tk.END, values=values)
-
-            # Use generic double-click binding
-            self.bind_treeview_double_click(
-                tree, columns,
-                lambda item_dict: self.show_details_popup("Inventory Item Details", item_dict)
-            )
-
-            # Search button
-            def on_search_change(*_):
-                col = selected_column.get()
-                self.filter_tree(tree, inventory_data, search_var.get(), column=None if col == "All" else col)
-
-            search_var.trace_add("write", on_search_change)
-            selected_column.trace_add("write", on_search_change)
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load inventory: {str(e)}")
+        self.inventory_view.show()
 
     def show_contacts(self):
-        # Clear existing content
-        for widget in self.content.winfo_children():
-            widget.destroy()
-
-        self.current_view = "contacts"
-
-        # Search bar
-        search_frame = ttk.Frame(self.content)
-        search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
-
-        search_var = tk.StringVar()
-        selected_column = tk.StringVar(value="All")
-
-        search_entry = ttk.Entry(search_frame, textvariable=search_var)
-        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-        column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")
-        column_dropdown.pack(side=tk.LEFT, padx=(5, 0))
-
-        # Create frame for Treeview
-        tree_frame = ttk.Frame(self.content)
-        tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        tree = ttk.Treeview(tree_frame)
-        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
-        tree.configure(yscrollcommand=scrollbar.set)
-        tree.pack(side="left", fill=tk.BOTH, expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-        try:
-            contacts_data = self.db.get_contacts()  # Use get_contacts, not get_clients
-            if not contacts_data:
-                ttk.Label(tree_frame, text="No contact data available").pack()
-                return
-            columns = list(contacts_data[0].keys())
-            tree["columns"] = columns
-            column_dropdown["values"] = ["All"] + columns
-            tree.column("#0", width=0, stretch=tk.NO)
-            
-            for col in columns:
-                tree.column(col, anchor=tk.CENTER, width=100)
-                tree.heading(col, text=col.title(), anchor=tk.CENTER)
-
-            for item in contacts_data:
-                values = [item[col] for col in columns]
-                tree.insert("", tk.END, values=values)
-            
-            # Use generic double-click binding
-            self.bind_treeview_double_click(
-                tree, columns,
-                lambda item_dict: self.show_details_popup("Contact Details", item_dict)
-            )
-            
-            # Search function for contacts
-            def on_search_change(*_):
-                col = selected_column.get()
-                self.filter_tree(tree, contacts_data, search_var.get(), column=None if col == "All" else col)
-            search_var.trace_add("write", on_search_change)
-            selected_column.trace_add("write", on_search_change)
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load contacts: {str(e)}")
+        self.contacts_view.show()
 
     def show_order_contents(self, order_id):
         # Show a dialog with the contents of the order
