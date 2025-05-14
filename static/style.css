@@ -1,0 +1,25 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+header {
+    background: #f0f0f0;
+    padding: 1em;
+}
+nav button {
+    margin-right: 1em;
+    padding: 0.5em 1em;
+}
+main {
+    padding: 2em;
+}
+footer {
+    background: #eee;
+    padding: 1em;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: right;
+    color: green;
+}

@@ -2,13 +2,19 @@ from database import VarehusDatabase
 import tkinter as tk
 from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
-import os
+import os, subprocess, sys
 from views.orders_view import OrdersView
 from views.inventory_view import InventoryView
 from views.contacts_view import ContactsView
 
 class App:
     def __init__(self):
+        # Start FastAPI
+        self.api_process = subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "api:app", "--reload"],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+        )
+
         self.db = VarehusDatabase()
         self.root = tk.Tk()
         self.root.title("Warehouse Mini CRM")
@@ -283,6 +289,13 @@ class App:
             row.pack(fill=tk.X, pady=2)
             ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
             ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
+
+    def on_close(self):
+    # Stop FastAPI server when closing the app
+        if hasattr(self, "api_process") and self.api_process:
+            self.api_process.terminate()
+            self.api_process.wait()
+        self.root.destroy()
 
     def start(self):
         print("Starting the app")
