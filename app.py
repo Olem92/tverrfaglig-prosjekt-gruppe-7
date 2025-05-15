@@ -19,7 +19,7 @@ class App:
         self.db = VarehusDatabase()
         self.root = tk.Tk()
         self.root.title("Warehouse Mini ERP System")
-        self.root.geometry("800x600")
+        self.root.geometry("1000x800")
         self.orders_view = OrdersView(self)
         self.inventory_view = InventoryView(self)
         self.contacts_view = ContactsView(self)
@@ -43,8 +43,6 @@ class App:
         win.focus_set()
         win.lift()
         win.protocol("WM_DELETE_WINDOW", lambda w=win: self._close_popup(w))
-        # Center popup on parent window
-        self.center_popup(win)
 
     def _close_popup(self, win):
         if win in self.popups:
@@ -106,34 +104,9 @@ class App:
         menu_bar.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
         # Menu buttons left
-        # Detect text color from style (default to black if not found)
-        style = ttk.Style()
-        text_color = style.lookup("TLabel", "foreground")
-        # If not a hex color, fallback to black (works for Windows classic theme)
-        if not text_color or not str(text_color).startswith("#"):
-            text_color = "#000000"
-        # Convert color to RGB tuple
-        def hex_to_rgb(value):
-            value = value.lstrip('#')
-            lv = len(value)
-            return tuple(int(value[i:i+lv//3], 16) for i in range(0, lv, lv//3))
-        rgb = hex_to_rgb(text_color)
-        # Load and colorize icons
+        # No colorize_icon needed, just use the PNGs as-is (black icons)
         home_img = Image.open(os.path.join(os.path.dirname(__file__), "icons", "home.png")).convert("RGBA").resize((18, 18), Image.LANCZOS)
         refresh_img = Image.open(os.path.join(os.path.dirname(__file__), "icons", "refresh.png")).convert("RGBA").resize((18, 18), Image.LANCZOS)
-        def colorize_icon(img, rgb):
-            datas = img.getdata()
-            newData = []
-            for item in datas:
-                # Only colorize non-transparent pixels
-                if item[3] > 0:
-                    newData.append((rgb[0], rgb[1], rgb[2], item[3]))
-                else:
-                    newData.append(item)
-            img.putdata(newData)
-            return img
-        home_img = colorize_icon(home_img, rgb)
-        refresh_img = colorize_icon(refresh_img, rgb)
         home_icon = ImageTk.PhotoImage(home_img)
         refresh_icon = ImageTk.PhotoImage(refresh_img)
         home_btn = ttk.Button(menu_bar, image=home_icon, command=self.reload_app)
@@ -326,6 +299,7 @@ class App:
     def show_details_popup(self, title, item_dict):
         # Generic popup for showing all details of a record
         win = tk.Toplevel(self.root)
+        win.geometry("800x600")  # Set popup size to match main window
         self.register_popup(win)
         win.title(title)
         frame = ttk.Frame(win, padding=10)
@@ -335,17 +309,9 @@ class App:
             row.pack(fill=tk.X, pady=2)
             ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
             ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
-
-    def center_popup(self, win):
-##  Dette setter vinduet default i center!!
+        # No centering, just set size
         win.update_idletasks()
-        w = win.winfo_width()
-        h = win.winfo_height()
-        sw = win.winfo_screenwidth()
-        sh = win.winfo_screenheight()
-        x = (sw - w) // 2
-        y = (sh - h) // 2
-        win.geometry(f"{w}x{h}+{x}+{y}")
+        win.geometry("800x600")
 
     def on_close(self):
         # Stop FastAPI server when closing the app
