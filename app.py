@@ -17,11 +17,12 @@ class App:
 
         self.db = VarehusDatabase()
         self.root = tk.Tk()
-        self.root.title("Warehouse Mini CRM")
+        self.root.title("Warehouse Mini ERP System")
         self.root.geometry("800x600")
         self.orders_view = OrdersView(self)
         self.inventory_view = InventoryView(self)
         self.contacts_view = ContactsView(self)
+        self.popups = []  # Track all popup windows
         
         # Add keyboard event bindings
         self.root.bind('<Key>', self.handle_keypress)  # Bind all keypresses
@@ -30,6 +31,26 @@ class App:
         self.create_main_interface()
         # Attempt to connect on startup
         self.attempt_connection()
+
+    def register_popup(self, win):
+        self.popups.append(win)
+        win.transient(self.root)
+        win.focus_set()
+        win.lift()
+        win.protocol("WM_DELETE_WINDOW", lambda w=win: self._close_popup(w))
+
+    def _close_popup(self, win):
+        if win in self.popups:
+            self.popups.remove(win)
+        win.destroy()
+
+    def close_all_popups(self):
+        for win in self.popups[:]:
+            try:
+                win.destroy()
+            except Exception:
+                pass
+        self.popups.clear()
 
     def handle_keypress(self, event):
         # F5 = Refresh
@@ -54,6 +75,7 @@ class App:
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Reconnect to Database", command=self.attempt_connection)
+        file_menu.add_command(label="Close All Popups", command=self.close_all_popups)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 
@@ -201,6 +223,7 @@ class App:
                 messagebox.showinfo("Order Contents", "No contents found for this order.")
                 return
             win = tk.Toplevel(self.root)
+            self.register_popup(win)
             win.title(f"Order {order_id}")
             frame = ttk.Frame(win, padding=10)
             frame.pack(fill=tk.BOTH, expand=True)
@@ -281,6 +304,7 @@ class App:
     def show_details_popup(self, title, item_dict):
         # Generic popup for showing all details of a record
         win = tk.Toplevel(self.root)
+        self.register_popup(win)
         win.title(title)
         frame = ttk.Frame(win, padding=10)
         frame.pack(fill=tk.BOTH, expand=True)

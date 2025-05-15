@@ -68,14 +68,62 @@ class OrdersView:
 
     def show_order_details_popup(self, order_dict):
         win = tk.Toplevel(self.app.root)
-        win.title("Order Details")
+        self.app.register_popup(win)
+        # Use order number in the title if available
+        order_id = order_dict.get("OrdreNr") or list(order_dict.values())[0]
+        win.title(f"Order {order_id}")
         frame = ttk.Frame(win, padding=10)
         frame.pack(fill=tk.BOTH, expand=True)
-        for key, value in order_dict.items():
-            row = ttk.Frame(frame)
-            row.pack(fill=tk.X, pady=2)
-            ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
-            ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
-        order_id = list(order_dict.values())[0]
-        btn = ttk.Button(frame, text="Show Order Contents", command=lambda: self.app.show_order_contents(order_id))
-        btn.pack(pady=10)
+        # Show all order details (not just table row)
+        order_id = order_dict.get("OrdreNr") or list(order_dict.values())[0]
+        # Fetch extra info if available
+        try:
+            # Try to get more details from the DB (if you have a method for this, use it)
+            # For now, show all fields from order_dict
+            for key, value in order_dict.items():
+                row = ttk.Frame(frame)
+                row.pack(fill=tk.X, pady=2)
+                ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
+                ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
+        except Exception as e:
+            ttk.Label(frame, text=f"Error loading details: {e}").pack()
+        # Show order contents below details
+        ttk.Label(frame, text="Order Contents:", font=("Helvetica", 12, "bold")).pack(pady=(10, 2))
+        contents = self.app.db.get_order_contents(order_id)
+        if not contents:
+            ttk.Label(frame, text="No contents found for this order.").pack()
+        else:
+            tree = ttk.Treeview(frame)
+            tree.pack(fill=tk.BOTH, expand=True)
+            columns = ["Item", "Item Number", "Quantity", "Price per Item", "Price total"]
+            tree["columns"] = columns
+            tree.column("#0", width=0, stretch=tk.NO)
+            tree.column("Item", anchor=tk.W, width=200)
+            tree.heading("Item", text="Item", anchor=tk.W)
+            for col in columns[1:]:
+                tree.column(col, anchor=tk.CENTER, width=120)
+                tree.heading(col, text=col, anchor=tk.CENTER)
+            for item in contents:
+                item_name = item.get("VareNavn") or item.get("Betegnelse") or item.get("Item") or ""
+                part_number = item.get("VNr") or item.get("ol.VNr") or item.get("Item Number") or ""
+                quantity = item.get("Antall") or item.get("Quantity") or 0
+                price_per_item = (
+                    item.get("PrisPrEnhet") or item.get("PrisprEnhet") or item.get("PrisEnhet") or item.get("Price per Item") or 0
+                )
+                try:
+                    quantity_val = float(quantity)
+                except Exception:
+                    quantity_val = 0
+                try:
+                    price_per_item_val = float(price_per_item)
+                except Exception:
+                    price_per_item_val = 0
+                price_total = price_per_item_val * quantity_val
+                values = [
+                    str(item_name),
+                    str(part_number),
+                    int(quantity_val) if quantity_val == int(quantity_val) else quantity_val,
+                    f"{price_per_item_val:,.2f}",
+                    f"{price_total:,.2f}"
+                ]
+                tree.insert("", tk.END, values=values)
