@@ -2,6 +2,8 @@
 .idea
 .DS_store
 /__pycache__
+/__pycache__*
+/__pycache__/*
 /fagskole-env/
 views/__pycache__/contacts_view.cpython-313.pyc
 views/__pycache__/inventory_view.cpython-313.pyc

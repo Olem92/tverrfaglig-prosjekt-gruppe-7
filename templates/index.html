@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Warehouse Mini CRM</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>Warehouse Mini CRM System</h1>
+        <nav>
+            <button id="home-btn" title="Home" onclick="location.href='/'">
+                <img src="/static/home.png" alt="Home">
+            </button>
+            <button onclick="location.href='/orders'">Orders</button>
+            <button onclick="location.href='/inventory'">Inventory</button>
+            <button onclick="location.href='/contacts'">Contacts</button>
+            <button id="refresh-btn" title="Refresh">
+                <img src="/static/refresh.png" alt="Refresh">
+            </button>
+        </nav>
+    </header>
+    <main>
+        <p>Welcome to Warehouse Mini CRM System</p>
+        <p>Write something useful here</p>
+    </main>
+    <footer>
+        <!-- Status removed as requested -->
+    </footer>
+    <script>
+        // Optionally, refresh the page on refresh button click
+        document.getElementById('refresh-btn').onclick = function() {
+            location.reload();
+        };
+    </script>
+</body>
+</html>

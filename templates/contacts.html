@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Contacts - Warehouse Mini CRM</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>Contacts</h1>
+        <nav>
+            <button id="home-btn" title="Home" onclick="location.href='/'">
+                <img src="/static/home.png" alt="Home">
+            </button>
+            <button onclick="location.href='/orders'">Orders</button>
+            <button onclick="location.href='/inventory'">Inventory</button>
+            <button onclick="location.href='/contacts'">Contacts</button>
+            <button id="refresh-btn" title="Refresh">
+                <img src="/static/refresh.png" alt="Refresh">
+            </button>
+        </nav>
+    </header>
+    <main>
+        <h2>Contact List</h2>
+        <div id="contacts-table">
+            <!-- Contacts will be loaded here by JavaScript -->
+        </div>
+    </main>
+    <footer>
+        <!-- Status removed as requested -->
+    </footer>
+    <script>
+        function loadTable() {
+            fetch('/api/contacts')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '<table><tr>';
+                    if (data.length > 0) {
+                        Object.keys(data[0]).forEach(key => {
+                            html += `<th>${key}</th>`;
+                        });
+                        html += '</tr>';
+                        data.forEach(contact => {
+                            html += '<tr>';
+                            Object.values(contact).forEach(val => {
+                                html += `<td>${val}</td>`;
+                            });
+                            html += '</tr>';
+                        });
+                    } else {
+                        html += '<td>No contacts found.</td></tr>';
+                    }
+                    html += '</table>';
+                    document.getElementById('contacts-table').innerHTML = html;
+                })
+                .catch(() => {
+                    document.getElementById('contacts-table').innerHTML = '<p>Could not load contacts.</p>';
+                });
+        }
+        window.onload = loadTable;
+        document.getElementById('refresh-btn').onclick = loadTable;
+    </script>
+</body>
+</html>
