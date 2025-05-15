@@ -2,17 +2,43 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    background: #fafafa;
 }
 header {
     background: #f0f0f0;
     padding: 1em;
+    text-align: center;
+}
+nav {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
 }
 nav button {
-    margin-right: 1em;
-    padding: 0.5em 1em;
+    padding: 0.7em 2em;
+    font-size: 1.1em;
+    border-radius: 6px;
+    border: 1px solid #bbb;
+    background: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+nav button:hover {
+    background: #e0e0e0;
 }
 main {
     padding: 2em;
+    text-align: center;
+}
+h1, h2, p {
+    text-align: center;
 }
 footer {
     background: #eee;
@@ -20,6 +46,66 @@ footer {
     position: fixed;
     bottom: 0;
     width: 100%;
-    text-align: right;
+    text-align: center;
     color: green;
+}
+table {
+    margin: 2em auto;
+    border-collapse: separate;
+    border-spacing: 0 0.7em;
+    width: 80%;
+    background: #fff;
+    box-shadow: 0 2px 10px #ddd;
+}
+th, td {
+    padding: 1em 1.5em;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 1.1em;
+    word-break: break-word;
+}
+th {
+    background: #f5f5f5;
+    font-weight: bold;
+}
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Fixed home and refresh buttons */
+#home-btn {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 1000;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-right: 2em;
+}
+#home-btn img {
+    display: block;
+    width: 28px;
+    height: 28px;
+}
+#refresh-btn {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 1000;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.3em 0.7em;
+    margin-left: 2em;
+}
+#refresh-btn img {
+    display: block;
+    width: 28px;
+    height: 28px;
+}
+#status {
+    font-weight: bold;
 }
