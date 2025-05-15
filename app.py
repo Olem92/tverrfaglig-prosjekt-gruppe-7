@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
 import os, subprocess, sys
+import webbrowser
 from views.orders_view import OrdersView
 from views.inventory_view import InventoryView
 from views.contacts_view import ContactsView
@@ -33,6 +34,8 @@ class App:
         self.attempt_connection()
         # Ensure proper cleanup on window close
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        # Ensure CMD+Q and other quit events also call on_close (macOS compatibility)
+        self.root.quit = self.on_close
 
     def register_popup(self, win):
         self.popups.append(win)
@@ -40,6 +43,8 @@ class App:
         win.focus_set()
         win.lift()
         win.protocol("WM_DELETE_WINDOW", lambda w=win: self._close_popup(w))
+        # Center popup on parent window
+        self.center_popup(win)
 
     def _close_popup(self, win):
         if win in self.popups:
@@ -148,15 +153,20 @@ class App:
         # Main content area
         self.content = ttk.Frame(self.main_frame)
         self.content.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+
+        # Center the main window on the screen
+        self.center_window()
         
         # Default welcome content
-        welcome_label = ttk.Label(self.content, text="Welcome to Warehouse Mini CRM System")
+        welcome_label = ttk.Label(self.content, text="Welcome to Warehouse Mini ERP System")
         welcome_label.pack(pady=20)
         style = ttk.Style()
         style.configure("Welcome.TLabel", font=('Helvetica', 16))
         welcome_label.configure(style="Welcome.TLabel")
         
-        ttk.Label(self.content, text="Write something usefull here").pack()
+        # Add button to open browser to FastAPI web app
+        open_web_btn = ttk.Button(self.content, text="Open Web App", command=self.open_web_app)
+        open_web_btn.pack(pady=10)
 
         # Status bar (connection info only)
         status_frame = ttk.Frame(self.root)
@@ -171,6 +181,16 @@ class App:
         # Connection style
         style.configure("Connected.TLabel", foreground="green")
         style.configure("Disconnected.TLabel", foreground="red")
+
+    def center_window(self):
+        self.root.update_idletasks()
+        w = self.root.winfo_width()
+        h = self.root.winfo_height()
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        self.root.geometry(f"{w}x{h}+{x}+{y}")
 
     def attempt_connection(self):
         try:
@@ -316,6 +336,17 @@ class App:
             ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
             ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
 
+    def center_popup(self, win):
+##  Dette setter vinduet default i center!!
+        win.update_idletasks()
+        w = win.winfo_width()
+        h = win.winfo_height()
+        sw = win.winfo_screenwidth()
+        sh = win.winfo_screenheight()
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        win.geometry(f"{w}x{h}+{x}+{y}")
+
     def on_close(self):
         # Stop FastAPI server when closing the app
         if hasattr(self, "api_process") and self.api_process:
@@ -326,6 +357,9 @@ class App:
                 self.api_process.kill()
             self.api_process = None  # Prevent double-kill
         self.root.destroy()
+
+    def open_web_app(self):
+        webbrowser.open_new_tab("http://127.0.0.1:8000/")
 
     def start(self):
         print("Starting the app")

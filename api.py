@@ -8,6 +8,8 @@ app = FastAPI()
 db = VarehusDatabase()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/icons", StaticFiles(directory="icons"), name="icons")
+
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)

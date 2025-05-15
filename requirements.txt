@@ -3,3 +3,4 @@ uvicorn
 pillow
 mysql-connector-python
 python-dotenv
+jinja2
