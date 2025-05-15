@@ -31,6 +31,8 @@ class App:
         self.create_main_interface()
         # Attempt to connect on startup
         self.attempt_connection()
+        # Ensure proper cleanup on window close
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def register_popup(self, win):
         self.popups.append(win)
@@ -77,7 +79,7 @@ class App:
         file_menu.add_command(label="Reconnect to Database", command=self.attempt_connection)
         file_menu.add_command(label="Close All Popups", command=self.close_all_popups)
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self.root.quit)
+        file_menu.add_command(label="Exit", command=self.on_close)
 
     def create_main_interface(self):
 
@@ -315,10 +317,14 @@ class App:
             ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
 
     def on_close(self):
-    # Stop FastAPI server when closing the app
+        # Stop FastAPI server when closing the app
         if hasattr(self, "api_process") and self.api_process:
-            self.api_process.terminate()
-            self.api_process.wait()
+            try:
+                self.api_process.terminate()
+                self.api_process.wait(timeout=5)
+            except Exception:
+                self.api_process.kill()
+            self.api_process = None  # Prevent double-kill
         self.root.destroy()
 
     def start(self):
