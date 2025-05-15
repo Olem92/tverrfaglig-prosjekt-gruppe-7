@@ -270,4 +270,14 @@ BEGIN
     SELECT * FROM ordre;
 END$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowContactsAmount`()
+BEGIN
+    SELECT COUNT(KNr) FROM kunde;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowContacts`()
+BEGIN
+    SELECT * FROM kunde;
+END$$
+
 DELIMITER ; 
