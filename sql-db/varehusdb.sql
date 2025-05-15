@@ -262,22 +262,30 @@ DELIMITER $$
 USE `varehusdb`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowInventory`()
 BEGIN
-    SELECT * FROM vare;
+    SELECT * FROM varehusdb.vare;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowOrders`()
 BEGIN
-    SELECT * FROM ordre;
+    SELECT * FROM varehusdb.ordre;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowContactsAmount`()
 BEGIN
-    SELECT COUNT(KNr) FROM kunde;
+    SELECT COUNT(KNr) FROM varehusdb.kunde;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowContacts`()
 BEGIN
-    SELECT * FROM kunde;
+    SELECT * FROM varehusdb.kunde;
+END$$
+
+CREATE PROCEDURE ShowOrderContents(IN order_id INT)
+BEGIN
+    SELECT v.Betegnelse AS VareNavn, ol.VNr, ol.Antall, ol.PrisPrEnhet
+    FROM varehusdb.ordrelinje AS ol
+    JOIN vare v ON ol.VNr = v.VNr
+    WHERE ol.OrdreNr = order_id;
 END$$
 
 DELIMITER ; 
