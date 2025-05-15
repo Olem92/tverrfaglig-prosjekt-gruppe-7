@@ -50,3 +50,15 @@ class ContactsView:
             selected_column.trace_add("write", on_search_change)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load contacts: {str(e)}")
+
+    def show_details_popup(self, title, item_dict):
+        win = tk.Toplevel(self.app.root)
+        self.app.register_popup(win)
+        win.title(title)
+        frame = ttk.Frame(win, padding=10)
+        frame.pack(fill=tk.BOTH, expand=True)
+        for key, value in item_dict.items():
+            row = ttk.Frame(frame)
+            row.pack(fill=tk.X, pady=2)
+            ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
+            ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
