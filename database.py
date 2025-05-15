@@ -91,10 +91,25 @@ class VarehusDatabase:
     def get_contacts(self):
         try:
             cursor = self.connection.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM kunde")
-            return cursor.fetchall()
+            cursor.callproc('ShowContacts')
+            # Fetch results from the stored procedure
+            for result in cursor.stored_results():
+                return result.fetchall()
         except Exception as e:
-            print(f"Error fetching contacts: {e}")
+            print(f"Error fetching inventory: {e}")
+            return []
+        finally:
+            cursor.close()
+    
+    def get_contacts_amount(self):
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            cursor.callproc('ShowContactsAmount')
+            # Fetch results from the stored procedure
+            for result in cursor.stored_results():
+                return result.fetchall()
+        except Exception as e:
+            print(f"Error fetching inventory: {e}")
             return []
         finally:
             cursor.close()
@@ -102,19 +117,11 @@ class VarehusDatabase:
     def get_order_contents(self, order_id):
         try:
             cursor = self.connection.cursor(dictionary=True)
-            # Join with vare for item name, using correct column name for item name
-
-            query = ("SELECT v.Betegnelse AS VareNavn, ol.VNr, ol.Antall, ol.PrisPrEnhet "
-                     "FROM ordrelinje AS ol "        ## ol. her er table ordrelinje!!
-                     "JOIN vare v ON ol.VNr = v.VNr "
-                     "WHERE ol.OrdreNr = %s")
-            
-            cursor.execute(query, (order_id,))
-            return cursor.fetchall()
-        
+            cursor.callproc('ShowOrderContents', (order_id,))
+            for result in cursor.stored_results():
+                return result.fetchall()
         except Exception as e:
             print(f"Error fetching order contents: {e}")
             return []
         finally:
             cursor.close()
-
