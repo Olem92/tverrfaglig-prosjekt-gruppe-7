@@ -1,4 +1,4 @@
-# OrdersView: Handles the Orders view for the Warehouse Mini CRM
+## Noe spesiell i forhold til de andre på grunn av furnksjonalitet rundt popups
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -39,6 +39,7 @@ class OrdersView:
         tree.pack(side="left", fill=tk.BOTH, expand=True)
         scrollbar.pack(side="right", fill="y")
 
+        # Hent ordre fra databasen
         try:
             orders_data = self.app.db.get_orders()
             if not orders_data:
@@ -58,6 +59,8 @@ class OrdersView:
                 tree, columns,
                 lambda item_dict: self.show_order_details_popup(item_dict)
             )
+
+            # Search funksjonalitet
             def on_search_change(*_):
                 col = selected_column.get()
                 self.app.filter_tree(tree, orders_data, search_var.get(), column=None if col == "All" else col)
@@ -66,9 +69,10 @@ class OrdersView:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load orders: {str(e)}")
 
+    ## Popup for ordre detaljer, som åpnes ved dobbeltklikk
     def show_order_details_popup(self, order_dict):
         win = tk.Toplevel(self.app.root)
-        self.app.register_popup(win)
+        self.app.register_popup(win)        ## registrer popup-vindu
         # Use order number in the title if available
         order_id = order_dict.get("OrdreNr") or list(order_dict.values())[0]
         win.title(f"Order {order_id}")
@@ -78,8 +82,8 @@ class OrdersView:
         order_id = order_dict.get("OrdreNr") or list(order_dict.values())[0]
         # Fetch extra info if available
         try:
-            # Try to get more details from the DB (if you have a method for this, use it)
-            # For now, show all fields from order_dict
+
+
             for key, value in order_dict.items():
                 row = ttk.Frame(frame)
                 row.pack(fill=tk.X, pady=2)
@@ -87,9 +91,11 @@ class OrdersView:
                 ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
         except Exception as e:
             ttk.Label(frame, text=f"Error loading details: {e}").pack()
+      
         # Show order contents below details
         ttk.Label(frame, text="Order Contents:", font=("Helvetica", 12, "bold")).pack(pady=(10, 2))
-        contents = self.app.db.get_order_contents(order_id)
+        contents = self.app.db.get_order_contents(order_id) ## denne henter ekstra contents gjennom funksjonen get_order_contents
+        
         if not contents:
             ttk.Label(frame, text="No contents found for this order.").pack()
         else:
@@ -100,9 +106,13 @@ class OrdersView:
             tree.column("#0", width=0, stretch=tk.NO)
             tree.column("Item", anchor=tk.W, width=200)
             tree.heading("Item", text="Item", anchor=tk.W)
+            
+            ## Lag klar columns
             for col in columns[1:]:
                 tree.column(col, anchor=tk.CENTER, width=120)
                 tree.heading(col, text=col, anchor=tk.CENTER)
+            
+            ## Fyll inn innhold
             for item in contents:
                 item_name = item.get("VareNavn") or item.get("Betegnelse") or item.get("Item") or ""
                 part_number = item.get("VNr") or item.get("ol.VNr") or item.get("Item Number") or ""
@@ -110,6 +120,8 @@ class OrdersView:
                 price_per_item = (
                     item.get("PrisPrEnhet") or item.get("PrisprEnhet") or item.get("PrisEnhet") or item.get("Price per Item") or 0
                 )
+                
+            ## Handle potential conversion errors    
                 try:
                     quantity_val = float(quantity)
                 except Exception:
@@ -126,4 +138,6 @@ class OrdersView:
                     f"{price_per_item_val:,.2f}",
                     f"{price_total:,.2f}"
                 ]
+                
+                ## Fyll inn i treeview
                 tree.insert("", tk.END, values=values)
