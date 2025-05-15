@@ -58,8 +58,8 @@ class App:
         self.popups.clear()
 
     def handle_keypress(self, event):
-        # F5 = Refresh
-        if event.keysym == 'F5':
+        # F5 or Ctrl + R = Refresh
+        if event.keysym == 'F5' or event.keysym.lower() == 'r' and (event.state & 0x0004):
             self.refresh_view()
         
         # Ctrl+O = Orders
@@ -70,7 +70,7 @@ class App:
         elif event.keysym.lower() == 'i' and (event.state & 0x0004):
             self.show_inventory()
         
-        return 'break'  # Stop event propagation
+        return 'break'  # Stop key handling
 
     def create_menu(self):
         menubar = tk.Menu(self.root)
