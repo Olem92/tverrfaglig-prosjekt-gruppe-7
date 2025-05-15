@@ -3,7 +3,7 @@ from mysql.connector import Error
 from dotenv import load_dotenv
 import os
 
-
+## Databaseklasse som håndterer tilkobling og forespørsler til databasen
 class VarehusDatabase:
     def __init__(self):
         load_dotenv()
@@ -16,6 +16,7 @@ class VarehusDatabase:
         self.connection = None
         print(f"Connecting to {self.database} on {self.host}:{self.port} as {self.user}")
 
+## Kobler til databasen
     def connect(self):
         try:
             self.connection = mysql.connector.connect(
@@ -30,38 +31,13 @@ class VarehusDatabase:
         except Error as e:
             print(e)
 
-    def insert_data(self):
-        try:
-            cursor = self.connection.cursor()
-            cursor.execute("INSERT INTO example_table (name) VALUES ('Sample Data')")
-            self.connection.commit()
-            print("Initial data inserted into 'example_table'.")
-        except Error as e:
-            print(f"Error inserting data into table. {e}")
-        finally:
-            cursor.close()
-
-    def delete_data(self, record_id):
-        try:
-            cursor = self.connection.cursor()
-            cursor.execute("DELETE FROM example_table WHERE id = %s", (record_id,))
-            deleted_rows = cursor.rowcount
-            self.connection.commit()
-            if deleted_rows > 0:
-                print(f"Deleted {deleted_rows} record(s) with ID {record_id}.")
-            else:
-                print(f"No record found with ID {record_id}.")
-        except Error as e:
-            print(f"Error deleting data from 'example_table': {e}")
-            self.connection.rollback()  # Rollback in case of error
-        finally:
-            cursor.close()
-
+## Sjekker om tilkoblingen er aktiv
     def close(self):
         if self.connection and self.connection.is_connected():
             self.connection.close()
             print("Connection closed")
 
+## Henter ordre via Stored Procedures
     def get_orders(self):
         try:
             cursor = self.connection.cursor(dictionary=True)
@@ -75,6 +51,7 @@ class VarehusDatabase:
         finally:
             cursor.close()
 
+## Henter lagerbeholdning via Stored Procedures
     def get_inventory(self):
         try:
             cursor = self.connection.cursor(dictionary=True)
@@ -88,6 +65,7 @@ class VarehusDatabase:
         finally:
             cursor.close()
 
+## Henter kontakter via Stored Procedures
     def get_contacts(self):
         try:
             cursor = self.connection.cursor(dictionary=True)
@@ -101,6 +79,7 @@ class VarehusDatabase:
         finally:
             cursor.close()
     
+## Henter antall kontakter via Stored Procedures
     def get_contacts_amount(self):
         try:
             cursor = self.connection.cursor(dictionary=True)
@@ -114,6 +93,7 @@ class VarehusDatabase:
         finally:
             cursor.close()
 
+## Henter ordreinnhold via Stored Procedures
     def get_order_contents(self, order_id):
         try:
             cursor = self.connection.cursor(dictionary=True)
