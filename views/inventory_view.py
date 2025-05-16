@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from views.translations.no_en_translation import NO_EN_TRANSLATION
 
 class InventoryView:
     def __init__(self, app):
@@ -45,7 +46,9 @@ class InventoryView:
             
             for col in columns:
                 tree.column(col, anchor=tk.CENTER, width=100)       # Set column width and headings
-                tree.heading(col, text=col.title(), anchor=tk.CENTER)
+                # Use translation if available, otherwise use the original column name
+                translated_col = NO_EN_TRANSLATION.get(col, col)
+                tree.heading(col, text=translated_col, anchor=tk.CENTER)
             for item in inventory_data:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
@@ -84,5 +87,7 @@ class InventoryView:
         for key, value in item_dict.items():
             row = ttk.Frame(frame)
             row.pack(fill=tk.X, pady=2)
-            ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
+            # Use translation if available, otherwise use the original key
+            translated_key = NO_EN_TRANSLATION.get(key, key)
+            ttk.Label(row, text=f"{translated_key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
             ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)

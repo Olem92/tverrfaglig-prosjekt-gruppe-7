@@ -1,6 +1,7 @@
 ## Noe spesiell i forhold til de andre på grunn av furnksjonalitet rundt popups
 import tkinter as tk
 from tkinter import ttk, messagebox
+from views.translations.no_en_translation import NO_EN_TRANSLATION
 
 class OrdersView:
     def __init__(self, app):
@@ -51,7 +52,9 @@ class OrdersView:
             tree.column("#0", width=0, stretch=tk.NO)
             for col in columns:
                 tree.column(col, anchor=tk.CENTER, width=100)
-                tree.heading(col, text=col.title(), anchor=tk.CENTER)
+                # Use translation if available, otherwise use the original column name
+                translated_col = NO_EN_TRANSLATION.get(col, col)
+                tree.heading(col, text=translated_col, anchor=tk.CENTER)
             for item in orders_data:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
@@ -109,7 +112,7 @@ class OrdersView:
         ttk.Label(row, text=customer_name, anchor=tk.W).pack(side=tk.LEFT)
         row = ttk.Frame(left_frame)
         row.pack(fill=tk.X, pady=2)
-        ttk.Label(row, text="Adress:", width=12, anchor=tk.W).pack(side=tk.LEFT)
+        ttk.Label(row, text="Address:", width=12, anchor=tk.W).pack(side=tk.LEFT)
         ttk.Label(row, text=customer_address, anchor=tk.W).pack(side=tk.LEFT)
         row = ttk.Frame(left_frame)
         row.pack(fill=tk.X, pady=2)
@@ -117,23 +120,17 @@ class OrdersView:
         ttk.Label(row, text=customer_zip, anchor=tk.W).pack(side=tk.LEFT)
 
         # Show order info in right column
-        translations = {
-            "OrdreNr": "Order Number",
-            "OrdreDato": "Order Date",
-            "SendtDato": "Sent Date",
-            "BetaltDato": "Paid Date",
-            "KNr": "Customer Number"
-        }
         for key in ["OrdreNr", "KNr", "OrdreDato", "SendtDato", "BetaltDato"]:
             value = order_dict.get(key, "")
             row = ttk.Frame(right_frame)
             row.pack(fill=tk.X, pady=2)
-            label_text = translations.get(key, key)
-            ttk.Label(row, text=f"{label_text}:", width=16, anchor=tk.W).pack(side=tk.LEFT)
+            # Use translation if available, otherwise use the original key
+            translated_key = NO_EN_TRANSLATION.get(key, key)
+            ttk.Label(row, text=f"{translated_key}:", width=16, anchor=tk.W).pack(side=tk.LEFT)
             ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
 
         # Show order contents below both columns
-        contents = self.app.db.get_order_contents(order_id) ## denne henter ekstra contents gjennom funksjonen get_order_contents
+        contents = self.app.db.get_order_contents(order_id)
         if not contents:
             ttk.Label(frame, text="No contents found for this order.").pack()
         else:
