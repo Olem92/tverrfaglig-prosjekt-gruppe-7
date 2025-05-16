@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Contacts - Warehouse Mini CRM</title>
+    <title>Management - Warehouse Mini CRM</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
         .table-container {
@@ -16,11 +16,18 @@
             margin: 2em 0 1em 0;
             width: 100%;
         }
+        .header-row-title-group {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            white-space: nowrap;
+        }
         .header-row h2 {
             margin: 0;
             font-size: 1.5em;
-            flex: 1;
+            flex: 0;
             text-align: left;
+            white-space: nowrap;
         }
         .search-bar-group {
             display: flex;
@@ -33,6 +40,25 @@
         }
         table {
             width: 100%;
+        }
+        .erp-btn {
+            background: #f0f0f0;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            padding: 0.5em 1.2em;
+            font-size: 1em;
+            cursor: pointer;
+            margin-left: 0.5em;
+            transition: background 0.2s, border 0.2s;
+        }
+        .erp-btn:hover {
+            background: #e0e0e0;
+            border-color: #888;
+        }
+        .actions-btn-group {
+            display: flex;
+            gap: 0.5em;
+            justify-content: center;
         }
     </style>
 </head>
@@ -54,11 +80,10 @@
     <main>
         <div class="table-container">
             <div class="header-row">
-                <h2 style="display:inline-block; vertical-align:middle;">
-                    Manage Contacts
-                    <a href="/management.html" title="📝 Edit Contacts" style="margin-left:0.5em; vertical-align:middle;">
-                    </a>
-                </h2>
+                <div class="header-row-title-group">
+                    <h2>Manage Contacts</h2>
+                    <button id="add-new-btn" class="erp-btn">Add new</button>
+                </div>
                 <div class="search-bar-group">
                     <input type="text" id="searchInput" placeholder="Search contacts...">
                     <select id="searchColumn"></select>
@@ -68,5 +93,99 @@
         </div>
     </main>
     <footer></footer>
+    <script>
+        let allData = [];
+        let columns = [];
+
+        function renderTable(data) {
+            let html = '<table><tr>';
+            if (data.length > 0) {
+                columns = Object.keys(data[0]);
+                columns.forEach(key => {
+                    html += `<th>${key}</th>`;
+                });
+                html += '<th>Actions</th></tr>'; // Add Actions column header
+                data.forEach(contact => {
+                    html += '<tr>';
+                    columns.forEach(col => {
+                        html += `<td>${contact[col]}</td>`;
+                    });
+                    // Add Edit and Delete buttons with erp-btn class and group
+                    html += `<td>
+                        <div class="actions-btn-group">
+                            <button class="edit-btn erp-btn" data-id="${contact[columns[0]]}">Edit</button>
+                            <button class="delete-btn erp-btn" data-id="${contact[columns[0]]}">Delete</button>
+                        </div>
+                    </td>`;
+                    html += '</tr>';
+                });
+            } else {
+                html += '<td>No contacts found.</td></tr>';
+            }
+            html += '</table>';
+            document.getElementById('contacts-table').innerHTML = html;
+
+            // Populate search column dropdown if not already populated
+            const searchColumn = document.getElementById('searchColumn');
+            if (searchColumn.options.length === 0 && columns.length > 0) {
+                columns.forEach(col => {
+                    const option = document.createElement('option');
+                    option.value = col;
+                    option.textContent = col;
+                    searchColumn.appendChild(option);
+                });
+            }
+
+            // Add event listeners for Edit and Delete buttons (optional, for future use)
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const id = this.getAttribute('data-id');
+                    // Implement edit logic here
+                    alert('Edit row with ID: ' + id);
+                };
+            });
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const id = this.getAttribute('data-id');
+                    // Implement delete logic here
+                    alert('Delete row with ID: ' + id);
+                };
+            });
+        }
+
+        function loadTable() {
+            fetch('/api/contacts')
+                .then(response => response.json())
+                .then(data => {
+                    allData = data;
+                    renderTable(allData);
+                })
+                .catch(() => {
+                    document.getElementById('contacts-table').innerHTML = '<p>Could not load contacts.</p>';
+                });
+        }
+
+        document.getElementById('refresh-btn').onclick = loadTable;
+
+        document.getElementById('searchInput').addEventListener('input', filterTable);
+        document.getElementById('searchColumn').addEventListener('change', filterTable);
+
+        // NEW CONTACT BUTTON
+        document.getElementById('add-new-btn').onclick = function() {
+            // ADD LOGIC HERE
+            alert('Add new contact');
+        };
+
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const column = document.getElementById('searchColumn').value;
+            const filtered = allData.filter(row =>
+                String(row[column]).toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        }
+
+        window.onload = loadTable;
+    </script>
 </body>
 </html>
