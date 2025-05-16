@@ -282,9 +282,19 @@ END$$
 
 CREATE PROCEDURE ShowOrderContents(IN order_id INT)
 BEGIN
-    SELECT v.Betegnelse AS VareNavn, ol.VNr, ol.Antall, ol.PrisPrEnhet
+    SELECT 
+        v.Betegnelse AS VareNavn, 
+        ol.VNr, 
+        ol.Antall, 
+        ol.PrisPrEnhet,
+        k.Fornavn,
+        k.Etternavn,
+        k.Adresse,
+        k.PostNr
     FROM varehusdb.ordrelinje AS ol
     JOIN vare v ON ol.VNr = v.VNr
+    JOIN ordre o ON ol.OrdreNr = o.OrdreNr
+    JOIN kunde k ON o.KNr = k.KNr
     WHERE ol.OrdreNr = order_id;
 END$$
 

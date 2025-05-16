@@ -227,58 +227,6 @@ class App:
     def show_contacts(self):
         self.contacts_view.show()
 
-    def show_order_contents(self, order_id):
-        # Show a dialog with the contents of the order
-        ## Litt mer komplekst enn de andre, da det trenger mer info i popup
-
-        try:
-            contents = self.db.get_order_contents(order_id)
-            if not contents:
-                messagebox.showinfo("Order Contents", "No contents found for this order.")
-                return
-            win = tk.Toplevel(self.root)
-            self.register_popup(win)
-            win.title(f"Order {order_id}")
-            frame = ttk.Frame(win, padding=10)
-            frame.pack(fill=tk.BOTH, expand=True)
-            tree = ttk.Treeview(frame)
-            tree.pack(fill=tk.BOTH, expand=True)
-            columns = ["Item", "Item Number", "Quantity", "Price per Item", "Price total"]
-            tree["columns"] = columns
-            tree.column("#0", width=0, stretch=tk.NO)
-            tree.column("Item", anchor=tk.W, width=200)
-            tree.heading("Item", text="Item", anchor=tk.W)
-            for col in columns[1:]:
-                tree.column(col, anchor=tk.CENTER, width=120)
-                tree.heading(col, text=col, anchor=tk.CENTER)
-            for item in contents:
-                # Map DB fields to display columns, gir mye finere navn. Tanken er å gjøre lignende for flere kolonner som bør bli navngitt på nytt
-                item_name = item.get("VareNavn") or item.get("Betegnelse") or item.get("Item") or ""
-                part_number = item.get("VNr") or item.get("ol.VNr") or item.get("Item Number") or ""
-                quantity = item.get("Antall") or item.get("Quantity") or 0
-                price_per_item = (
-                    item.get("PrisPrEnhet") or item.get("PrisprEnhet") or item.get("PrisEnhet") or item.get("Price per Item") or 0
-                )
-                try:
-                    quantity_val = float(quantity)
-                except Exception:
-                    quantity_val = 0
-                try:
-                    price_per_item_val = float(price_per_item)
-                except Exception:
-                    price_per_item_val = 0
-                price_total = price_per_item_val * quantity_val
-                values = [
-                    str(item_name),
-                    str(part_number),
-                    int(quantity_val) if quantity_val == int(quantity_val) else quantity_val,
-                    f"{price_per_item_val:,.2f}",
-                    f"{price_total:,.2f}"
-                ]
-                tree.insert("", tk.END, values=values)
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load order contents: {str(e)}")
-
     # Filter function for search bar, fungerer på alle sidene.
     def filter_tree(self, tree, data, query, column=None):
         query = query.lower()
@@ -315,23 +263,6 @@ class App:
             self.show_contacts() # Refreshes contacts view
         else:
             messagebox.showinfo("Refresh", "No active view to refresh.")
-
-    ## Popup for å vise innhold i de forskjellige views, generic slik den fungerer på alle sider.
-    def show_details_popup(self, title, item_dict):
-        win = tk.Toplevel(self.root)
-        win.geometry("800x600")  # Setter størrelse på popup
-
-        self.register_popup(win) ## Registerer vindu slik at Python har kontroll på vinduene selv, og funskjonalitet for å lukke fungerer
-        win.title(title)
-
-        frame = ttk.Frame(win, padding=10)
-        frame.pack(fill=tk.BOTH, expand=True)
-
-        for key, value in item_dict.items():
-            row = ttk.Frame(frame)
-            row.pack(fill=tk.X, pady=2)
-            ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
-            ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
 
     def on_close(self):
         # Stop FastAPI server when closing the app, slik at man ikke har stale connections, og port blir holdt.
