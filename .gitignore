@@ -8,3 +8,5 @@
 views/__pycache__/contacts_view.cpython-313.pyc
 views/__pycache__/inventory_view.cpython-313.pyc
 views/__pycache__/orders_view.cpython-313.pyc
+views/translations/__pycache__/no_en_translation.cpython-313.pyc
+.gitignore
