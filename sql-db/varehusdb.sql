@@ -256,10 +256,30 @@ SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 
 
 
--- FIX --
+-- VÅRE CHANGES --
+
+START TRANSACTION;
+
+    -- Step 1: Drop the foreign key constraint
+    ALTER TABLE `varehusdb`.`ordre` 
+    DROP FOREIGN KEY `OrdreKundeFN`;
+
+    -- Step 2: Modify the column to add auto-increment
+    ALTER TABLE `varehusdb`.`kunde` 
+    MODIFY COLUMN `KNr` INT NOT NULL AUTO_INCREMENT;
+
+    -- Step 3: Re-add the foreign key constraint
+    ALTER TABLE `varehusdb`.`ordre`
+    ADD CONSTRAINT `OrdreKundeFN`
+    FOREIGN KEY (`KNr`) 
+    REFERENCES `varehusdb`.`kunde` (`KNr`);
+
+COMMIT;
 
 DELIMITER $$
+
 USE `varehusdb`$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowInventory`()
 BEGIN
     SELECT * FROM varehusdb.vare;
@@ -280,7 +300,7 @@ BEGIN
     SELECT * FROM varehusdb.kunde;
 END$$
 
-CREATE PROCEDURE ShowOrderContents(IN order_id INT)
+CREATE PROCEDURE `ShowOrderContents`(IN order_id INT)
 BEGIN
     SELECT 
         v.Betegnelse AS VareNavn, 
@@ -318,19 +338,58 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `EditContacts`(
 )
 BEGIN
     UPDATE kunde
-    SET Fornavn = p_Fornavn,
+    SET 
+        Fornavn = p_Fornavn,
         Etternavn = p_Etternavn,
         Adresse = p_Adresse,
         PostNr = p_PostNr
     WHERE KNr = p_KNr;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `RemoveContacts`(
-    IN p_KNr INT
-)
+DELIMITER $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `RemoveContacts`(IN p_KNr INT)
 BEGIN
-    DELETE FROM kunde
+    -- Store count of affected records for reporting
+    DECLARE order_count INT DEFAULT 0;
+    DECLARE orderline_count INT DEFAULT 0;
+    
+    -- Start a transaction to ensure data integrity
+    START TRANSACTION;
+    
+    -- First, count and delete all order lines associated with this customer's orders
+    SELECT COUNT(*) INTO orderline_count 
+    FROM `varehusdb`.`ordrelinje` ol
+    INNER JOIN `varehusdb`.`ordre` o ON ol.OrdreNr = o.OrdreNr
+    WHERE o.KNr = p_KNr;
+    
+    -- Delete the order lines
+    DELETE ol FROM `varehusdb`.`ordrelinje` ol
+    INNER JOIN `varehusdb`.`ordre` o ON ol.OrdreNr = o.OrdreNr
+    WHERE o.KNr = p_KNr;
+    
+    -- Count and delete all orders from this customer
+    SELECT COUNT(*) INTO order_count 
+    FROM `varehusdb`.`ordre` 
     WHERE KNr = p_KNr;
+    
+    -- Delete the orders
+    DELETE FROM `varehusdb`.`ordre` 
+    WHERE KNr = p_KNr;
+    
+    -- Finally, delete the customer record
+    DELETE FROM `varehusdb`.`kunde` 
+    WHERE KNr = p_KNr;
+    
+    -- Commit the transaction if all deletions were successful
+    COMMIT;
+    
+    -- Return confirmation with counts of deleted items
+    SELECT 
+        p_KNr AS CustomerID,
+        'Deleted successfully' AS Status,
+        order_count AS OrdersRemoved,
+        orderline_count AS OrderLinesRemoved;
 END$$
 
-DELIMITER ; 
+DELIMITER ;
