@@ -52,7 +52,7 @@ class ContactsView:
             # Bind double-click event to show a popup with contact details
             self.app.bind_treeview_double_click(
                 tree, columns,
-                lambda item_dict: self.app.show_details_popup("Contact Details", item_dict)
+                lambda item_dict: self.show_details_popup("Contact Details", item_dict)
             )
            
             ## Søkelogikk slik at den er "realtime"
@@ -72,6 +72,7 @@ class ContactsView:
     def show_details_popup(self, title, item_dict):
         # Show a popup window with all details for a contact
         win = tk.Toplevel(self.app.root)
+        win.geometry("800x600")  # Set a reasonable size for the popup
         self.app.register_popup(win)  # Register popup for bulk close support
         win.title(title)
         frame = ttk.Frame(win, padding=10)

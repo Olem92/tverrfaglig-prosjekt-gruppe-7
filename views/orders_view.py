@@ -75,27 +75,65 @@ class OrdersView:
         self.app.register_popup(win)        ## registrer popup-vindu
         # Use order number in the title if available
         order_id = order_dict.get("OrdreNr") or list(order_dict.values())[0]
-        win.title(f"Order {order_id}")
+        win.title(f"{order_id} Order Contents")
         frame = ttk.Frame(win, padding=10)
         frame.pack(fill=tk.BOTH, expand=True)
-        # Show all order details (not just table row)
-        order_id = order_dict.get("OrdreNr") or list(order_dict.values())[0]
-        # Fetch extra info if available
-        try:
 
+        # Create a top frame for two-column layout (customer left, order info right)
+        top_frame = ttk.Frame(frame)
+        top_frame.pack(fill=tk.X, pady=(0, 10))
+        left_frame = ttk.Frame(top_frame)
+        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 20))
+        right_frame = ttk.Frame(top_frame)
+        right_frame.pack(side=tk.LEFT, fill=tk.Y, anchor=tk.N)
 
-            for key, value in order_dict.items():
-                row = ttk.Frame(frame)
-                row.pack(fill=tk.X, pady=2)
-                ttk.Label(row, text=f"{key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
-                ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
-        except Exception as e:
-            ttk.Label(frame, text=f"Error loading details: {e}").pack()
-      
-        # Show order contents below details
-        ttk.Label(frame, text="Order Contents:", font=("Helvetica", 12, "bold")).pack(pady=(10, 2))
+        # Fetch order contents (which now includes Fornavn, Etternavn, Adresse, PostNr)
+        contents = self.app.db.get_order_contents(order_id)
+        if contents and 'Fornavn' in contents[0] and 'Etternavn' in contents[0]:
+            customer_name = f"{contents[0]['Fornavn']} {contents[0]['Etternavn']}"
+        else:
+            customer_name = "Unknown"
+        if contents and 'Adresse' in contents[0]:
+            customer_address = contents[0]['Adresse']
+        else:
+            customer_address = "Unknown"
+        if contents and 'PostNr' in contents[0]:
+            customer_zip = contents[0]['PostNr']
+        else:
+            customer_zip = "Unknown"
+
+        # Show customer info in left column
+        row = ttk.Frame(left_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Name:", width=12, anchor=tk.W).pack(side=tk.LEFT)
+        ttk.Label(row, text=customer_name, anchor=tk.W).pack(side=tk.LEFT)
+        row = ttk.Frame(left_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Adress:", width=12, anchor=tk.W).pack(side=tk.LEFT)
+        ttk.Label(row, text=customer_address, anchor=tk.W).pack(side=tk.LEFT)
+        row = ttk.Frame(left_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="ZIP Code:", width=12, anchor=tk.W).pack(side=tk.LEFT)
+        ttk.Label(row, text=customer_zip, anchor=tk.W).pack(side=tk.LEFT)
+
+        # Show order info in right column
+        translations = {
+            "OrdreNr": "Order Number",
+            "OrdreDato": "Order Date",
+            "SendtDato": "Sent Date",
+            "BetaltDato": "Paid Date",
+            "KNr": "Customer Number"
+        }
+        for key in ["OrdreNr", "KNr", "OrdreDato", "SendtDato", "BetaltDato"]:
+            value = order_dict.get(key, "")
+            row = ttk.Frame(right_frame)
+            row.pack(fill=tk.X, pady=2)
+            label_text = translations.get(key, key)
+            ttk.Label(row, text=f"{label_text}:", width=16, anchor=tk.W).pack(side=tk.LEFT)
+            ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
+
+        # Show order contents below both columns
         contents = self.app.db.get_order_contents(order_id) ## denne henter ekstra contents gjennom funksjonen get_order_contents
-        
         if not contents:
             ttk.Label(frame, text="No contents found for this order.").pack()
         else:
@@ -106,13 +144,10 @@ class OrdersView:
             tree.column("#0", width=0, stretch=tk.NO)
             tree.column("Item", anchor=tk.W, width=200)
             tree.heading("Item", text="Item", anchor=tk.W)
-            
-            ## Lag klar columns
             for col in columns[1:]:
                 tree.column(col, anchor=tk.CENTER, width=120)
                 tree.heading(col, text=col, anchor=tk.CENTER)
-            
-            ## Fyll inn innhold
+            total_sum = 0
             for item in contents:
                 item_name = item.get("VareNavn") or item.get("Betegnelse") or item.get("Item") or ""
                 part_number = item.get("VNr") or item.get("ol.VNr") or item.get("Item Number") or ""
@@ -120,8 +155,6 @@ class OrdersView:
                 price_per_item = (
                     item.get("PrisPrEnhet") or item.get("PrisprEnhet") or item.get("PrisEnhet") or item.get("Price per Item") or 0
                 )
-                
-            ## Handle potential conversion errors    
                 try:
                     quantity_val = float(quantity)
                 except Exception:
@@ -131,6 +164,7 @@ class OrdersView:
                 except Exception:
                     price_per_item_val = 0
                 price_total = price_per_item_val * quantity_val
+                total_sum += price_total
                 values = [
                     str(item_name),
                     str(part_number),
@@ -138,6 +172,10 @@ class OrdersView:
                     f"{price_per_item_val:,.2f}",
                     f"{price_total:,.2f}"
                 ]
-                
-                ## Fyll inn i treeview
                 tree.insert("", tk.END, values=values)
+
+            # Totalsum helt i bunn, right-aligned, same font/size as order info rows
+            total_row = ttk.Frame(frame)
+            total_row.pack(fill=tk.X, pady=(10, 2))
+            ttk.Label(total_row, text=f"{total_sum:,.2f}", anchor=tk.E, font=("Helvetica", 10)).pack(side=tk.RIGHT)
+            ttk.Label(total_row, text="Total:", width=12, anchor=tk.E, font=("Helvetica", 10)).pack(side=tk.RIGHT)
