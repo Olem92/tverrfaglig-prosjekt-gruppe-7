@@ -2,10 +2,22 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 from database import VarehusDatabase
 
 app = FastAPI()
 db = VarehusDatabase()
+
+## Brukt for å validere data som sendes til APIet
+class ContactIn(BaseModel):
+    fornavn: str
+    etternavn: str
+    adresse: str
+    postnr: str
+
+class ContactEdit(ContactIn):
+    knr: int
+
 
 ## FastAPI henter CSS-filer
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -93,3 +105,21 @@ def get_contacts():
 #        return db.get_contacts()
 #    except Exception as e:
 #        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/contacts")
+def add_contact(contact: ContactIn):
+    if db.add_contacts(contact.fornavn, contact.etternavn, contact.adresse, contact.postnr):
+        return {"success": True}
+    raise HTTPException(status_code=400, detail="Could not add contact")
+
+@app.put("/api/contacts/{knr}")
+def edit_contact(knr: int, contact: ContactIn):
+    if db.edit_contacts(knr, contact.fornavn, contact.etternavn, contact.adresse, contact.postnr):
+        return {"success": True}
+    raise HTTPException(status_code=400, detail="Could not edit contact")
+
+@app.delete("/api/contacts/{knr}")
+def delete_contact(knr: int):
+    if db.remove_contacts(knr):
+        return {"success": True}
+    raise HTTPException(status_code=400, detail="Could not delete contact")
