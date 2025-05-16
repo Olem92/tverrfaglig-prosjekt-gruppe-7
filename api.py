@@ -36,7 +36,7 @@ async def contacts_page(request: Request):
 
 ## FastAPI henter kontakter fra databasen
 @app.get("/management", response_class=HTMLResponse)
-async def contacts_page(request: Request):
+async def management_page(request: Request):
     return templates.TemplateResponse("management.html", {"request": request})
 
 ## FastAPI kobler til og henter data fra databasen
@@ -70,3 +70,26 @@ def get_contacts():
         return db.get_contacts()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+##### FIX Management funksjoner! ==>
+#@app.get("/api/management")
+#def get_contacts():
+#    try:
+#        return db.get_contacts()
+#    except Exception as e:
+#        raise HTTPException(status_code=500, detail=str(e))
+#    
+#@app.get("/api/management")
+#def get_contacts():
+#    try:
+#        return db.get_contacts()
+#    except Exception as e:
+#        raise HTTPException(status_code=500, detail=str(e))
+#    
+#@app.get("/api/management")
+#def get_contacts():
+#    try:
+#        return db.get_contacts()
+#    except Exception as e:
+#        raise HTTPException(status_code=500, detail=str(e))

@@ -105,3 +105,42 @@ class VarehusDatabase:
             return []
         finally:
             cursor.close()
+
+ ## Legger til en kunde via Stored Procedure
+    def add_contacts(self, fornavn, etternavn, adresse, postnr):
+        try:
+            cursor = self.connection.cursor()
+            cursor.callproc('AddContacts', (fornavn, etternavn, adresse, postnr))
+            self.connection.commit()
+            return True
+        except Exception as e:
+            print(f"Error adding contact: {e}")
+            return False
+        finally:
+            cursor.close()
+
+## Oppdaterer en kunde via Stored Procedure
+    def edit_contacts(self, knr, fornavn, etternavn, adresse, postnr):
+        try:
+            cursor = self.connection.cursor()
+            cursor.callproc('EditContacts', (knr, fornavn, etternavn, adresse, postnr))
+            self.connection.commit()
+            return True
+        except Exception as e:
+            print(f"Error editing contact: {e}")
+            return False
+        finally:
+            cursor.close()
+
+## Fjerner en kunde via Stored Procedure
+    def remove_contacts(self, knr):
+        try:
+            cursor = self.connection.cursor()
+            cursor.callproc('RemoveContacts', (knr,))
+            self.connection.commit()
+            return True
+        except Exception as e:
+            print(f"Error removing contact: {e}")
+            return False
+        finally:
+            cursor.close()
