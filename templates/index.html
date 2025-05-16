@@ -4,6 +4,57 @@
     <meta charset="UTF-8">
     <title>Warehouse Mini ERP</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .features-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2em;
+            margin: 2em 0 1em 0;
+            padding: 0;
+            list-style: none;
+        }
+        .feature-card {
+            background: linear-gradient(135deg, #e3ecfa 0%, #f8f9fa 100%);
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(56,103,214,0.08), 0 1.5px 4px rgba(56,103,214,0.06);
+            padding: 2em 1.5em 1.5em 1.5em;
+            min-width: 220px;
+            max-width: 260px;
+            flex: 1 1 220px;
+            text-align: center;
+            transition: transform 0.15s, box-shadow 0.15s;
+            border: 1.5px solid #dbeafe;
+            cursor: pointer;
+        }
+        .feature-card:hover {
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 0 6px 24px rgba(56,103,214,0.13), 0 2px 8px rgba(56,103,214,0.09);
+            border-color: #3867d6;
+        }
+        .feature-card h3 {
+            margin-top: 0.2em;
+            margin-bottom: 0.7em;
+            color: #3867d6;
+            font-size: 1.25em;
+            letter-spacing: 0.01em;
+        }
+        .feature-card p {
+            margin: 0;
+            color: #444;
+            font-size: 1em;
+        }
+        @media (max-width: 900px) {
+            .features-list {
+                flex-direction: column;
+                gap: 1em;
+            }
+            .feature-card {
+                min-width: 0;
+                max-width: 100vw;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -21,14 +72,37 @@
         </nav>
     </header>
     <main>
-        <p>Welcome to Warehouse Mini ERP System</p>
+        <p class="welcome-desc" style="text-align:center;">
+            Welcome to Warehouse Mini ERP System<br><br>
+            <span style="font-size:1em; color:#3867d6;">
+                Your all-in-one solution for managing orders, inventory, and contacts efficiently.<br>
+                Use the navigation above to get started, or explore the features below.
+            </span>
+        </p>
+        <ul class="features-list">
+            <li class="feature-card" onclick="location.href='/inventory'">
+                <h3>📦 Inventory Management</h3>
+                <p>Track stock levels, search and filter products, and keep your warehouse organized.</p>
+            </li>
+            <li class="feature-card" onclick="location.href='/orders'">
+                <h3>📝 Order Handling</h3>
+                <p>View, search, and manage customer orders with ease and accuracy.</p>
+            </li>
+            <li class="feature-card" onclick="location.href='/contacts'">
+                <h3>👥 Contact Directory</h3>
+                <p>Maintain a searchable list of suppliers, customers, and partners.</p>
+            </li>
+            <li class="feature-card" onclick="location.href='/management'">
+                <h3>🔨 Contact Management</h3>
+                <p>Quickly manage customers, add, edit and remove customers.</p>
+            </li>
+        </ul>
     </main>
     <footer>
         <p>&copy; 2025 Warehouse Mini ERP</p>
         <p>Developed by Group 7</p>
     </footer>
     <script>
-        // Optionally, refresh the page on refresh button click
         document.getElementById('refresh-btn').onclick = function() {
             location.reload();
         };

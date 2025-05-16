@@ -2,12 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Orders - Warehouse Mini ERP</title>
+    <title>Orders - Warehouse Mini CRM</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .table-container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2em 0 1em 0;
+            width: 100%;
+        }
+        .header-row h2 {
+            margin: 0;
+            font-size: 1.5em;
+            flex: 1;
+            text-align: left;
+        }
+        .search-bar-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+        .search-bar-group input, .search-bar-group select {
+            padding: 0.5em;
+            font-size: 1em;
+        }
+        table {
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <h1>Orders</h1>
+        <h1>Warehouse Mini ERP System</h1>
         <nav>
             <button id="home-btn" title="Home" onclick="location.href='/'">
                 <img src="/icons/home.png" alt="Home">
@@ -21,45 +52,82 @@
         </nav>
     </header>
     <main>
-        <h2>Order List</h2>
-        <div id="orders-table">
-            <!-- Orders will be loaded here by JavaScript -->
+        <div class="table-container">
+            <div class="header-row">
+                <h2>Order List</h2>
+                <div class="search-bar-group">
+                    <input type="text" id="searchInput" placeholder="Search orders...">
+                    <select id="searchColumn"></select>
+                </div>
+            </div>
+            <div id="orders-table"></div>
         </div>
     </main>
-    <footer>
-        <p>&copy; 2025 Warehouse Mini ERP</p>
-        <p>Developed by Group 7</p>
-    </footer>
+    <footer></footer>
     <script>
+        let allData = [];
+        let columns = [];
+
+        function renderTable(data) {
+            let html = '<table><tr>';
+            if (data.length > 0) {
+                columns = Object.keys(data[0]);
+                columns.forEach(key => {
+                    html += `<th>${key}</th>`;
+                });
+                html += '</tr>';
+                data.forEach(order => {
+                    html += '<tr>';
+                    columns.forEach(col => {
+                        html += `<td>${order[col]}</td>`;
+                    });
+                    html += '</tr>';
+                });
+            } else {
+                html += '<td>No orders found.</td></tr>';
+            }
+            html += '</table>';
+            document.getElementById('orders-table').innerHTML = html;
+
+            // Populate search column dropdown if not already populated
+            const searchColumn = document.getElementById('searchColumn');
+            if (searchColumn.options.length === 0 && columns.length > 0) {
+                columns.forEach(col => {
+                    const option = document.createElement('option');
+                    option.value = col;
+                    option.textContent = col;
+                    searchColumn.appendChild(option);
+                });
+            }
+        }
+
         function loadTable() {
             fetch('/api/orders')
                 .then(response => response.json())
                 .then(data => {
-                    let html = '<table><tr>';
-                    if (data.length > 0) {
-                        Object.keys(data[0]).forEach(key => {
-                            html += `<th>${key}</th>`;
-                        });
-                        html += '</tr>';
-                        data.forEach(order => {
-                            html += '<tr>';
-                            Object.values(order).forEach(val => {
-                                html += `<td>${val}</td>`;
-                            });
-                            html += '</tr>';
-                        });
-                    } else {
-                        html += '<td>No orders found.</td></tr>';
-                    }
-                    html += '</table>';
-                    document.getElementById('orders-table').innerHTML = html;
+                    allData = data;
+                    renderTable(allData);
                 })
                 .catch(() => {
                     document.getElementById('orders-table').innerHTML = '<p>Could not load orders.</p>';
                 });
         }
-        window.onload = loadTable;
+
         document.getElementById('refresh-btn').onclick = loadTable;
+
+        document.getElementById('searchInput').addEventListener('input', filterTable);
+        document.getElementById('searchColumn').addEventListener('change', filterTable);
+
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const column = document.getElementById('searchColumn').value;
+            const filtered = allData.filter(row =>
+                String(row[column]).toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        }
+
+        window.onload = loadTable;
     </script>
 </body>
 </html>

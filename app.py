@@ -2,8 +2,7 @@ from database import VarehusDatabase
 import tkinter as tk
 from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
-import os, subprocess, sys
-import webbrowser
+import os, subprocess, sys, webbrowser
 from views.orders_view import OrdersView
 from views.inventory_view import InventoryView
 from views.contacts_view import ContactsView
