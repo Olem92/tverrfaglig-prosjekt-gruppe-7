@@ -1,13 +1,21 @@
-body {
+body, html {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     background: #fafafa;
+    color: #222;
 }
+
 header {
     background: #f0f0f0;
     padding: 1em;
     text-align: center;
+}
+header h1 {
+    margin: 0 0 0.5em 0;
+    color: #2a4d69;
+    font-size: 2.1em;
+    letter-spacing: 0.01em;
 }
 nav {
     margin-top: 1em;
@@ -33,21 +41,129 @@ nav button {
 nav button:hover {
     background: #e0e0e0;
 }
-main {
-    padding: 2em;
-    text-align: center;
+nav button img {
+    vertical-align: middle;
+    width: 28px;
+    height: 28px;
 }
-h1, h2, p {
-    text-align: center;
-}
-footer {
-    background: #eee;
-    padding: 1em;
+
+/* Fixed home and refresh buttons */
+#home-btn {
     position: fixed;
-    bottom: 0;
-    width: 100%;
+    top: 18px;
+    left: 18px;
+    z-index: 1000;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-right: 2em;
+}
+#refresh-btn {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 1000;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.3em 0.7em;
+    margin-left: 2em;
+}
+#home-btn img, #refresh-btn img {
+    display: block;
+    width: 28px;
+    height: 28px;
+}
+
+/* Welcome/Info box on index */
+.welcome-container {
+    width: 98vw;
+    max-width: none;
+    margin: 2em auto 2em auto;
+    padding: 2em 2em 1em 2em;
+    background: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
     text-align: center;
-    color: green;
+}
+.welcome-container h2 {
+    margin-top: 0;
+    color: #2a4d69;
+}
+.welcome-desc {
+    margin: 0.7em 0 1.5em 0;
+    color: #2a4d69;
+    font-size: 1.15em;
+}
+
+/* Features cards on index */
+.features-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2em;
+    margin: 2em 0 1em 0;
+    padding: 0;
+    list-style: none;
+}
+.feature-card {
+    background: linear-gradient(135deg, #e3ecfa 0%, #f8f9fa 100%);
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(56,103,214,0.08), 0 1.5px 4px rgba(56,103,214,0.06);
+    padding: 2em 1.5em 1.5em 1.5em;
+    min-width: 220px;
+    max-width: 260px;
+    flex: 1 1 220px;
+    text-align: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 1.5px solid #dbeafe;
+}
+.feature-card:hover {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 6px 24px rgba(56,103,214,0.13), 0 2px 8px rgba(56,103,214,0.09);
+    border-color: #3867d6;
+}
+.feature-card h3 {
+    margin-top: 0.2em;
+    margin-bottom: 0.7em;
+    color: #3867d6;
+    font-size: 1.25em;
+    letter-spacing: 0.01em;
+}
+.feature-card p {
+    margin: 0;
+    color: #444;
+    font-size: 1em;
+}
+
+/* Table containers for main pages */
+.table-container {
+    width: 80%;
+    margin: 0 auto;
+}
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2em 0 1em 0;
+    width: 100%;
+}
+.header-row h2 {
+    margin: 0;
+    font-size: 1.5em;
+    flex: 1;
+    text-align: left;
+}
+.search-bar-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+.search-bar-group input, .search-bar-group select {
+    padding: 0.5em;
+    font-size: 1em;
 }
 table {
     margin: 2em auto;
@@ -72,40 +188,32 @@ tr:last-child td {
     border-bottom: none;
 }
 
-/* Fixed home and refresh buttons */
-#home-btn {
+/* Footer */
+footer {
+    background: #eee;
+    padding: 1em;
     position: fixed;
-    top: 18px;
-    left: 18px;
-    z-index: 1000;
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    margin-right: 2em;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    color: green;
 }
-#home-btn img {
-    display: block;
-    width: 28px;
-    height: 28px;
-}
-#refresh-btn {
-    position: fixed;
-    top: 18px;
-    right: 18px;
-    z-index: 1000;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.3em 0.7em;
-    margin-left: 2em;
-}
-#refresh-btn img {
-    display: block;
-    width: 28px;
-    height: 28px;
-}
-#status {
-    font-weight: bold;
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .features-list {
+        flex-direction: column;
+        gap: 1em;
+    }
+    .feature-card {
+        min-width: 0;
+        max-width: 100vw;
+    }
+    .table-container {
+        width: 98vw;
+    }
+    .welcome-container {
+        width: 100vw;
+        padding: 1em 0.5em;
+    }
 }
