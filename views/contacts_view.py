@@ -85,9 +85,6 @@ class ContactsView:
         
         remove_button = ttk.Button(button_frame, text="Remove Contact", command=self.remove_selected_contact)
         remove_button.pack(side=tk.LEFT)
-
-        edit_button = ttk.Button(button_frame, text="Edit Contact", command=self.edit_selected_contact)
-        edit_button.pack(side=tk.LEFT)
         
         ## Henter info til tabell/GUI
         try:
@@ -232,34 +229,15 @@ class ContactsView:
         ttk.Button(button_frame, text="Cancel", command=win.destroy).pack(side=tk.RIGHT)
 
     def save_new_contact(self, entries, window):
-        # Map GUI fields to database fields
-        fornavn = entries["Firstname"].get()
-        etternavn = entries["Lastname"].get()
-        adresse = entries["Address"].get()
-        postnr = entries["ZIP Code"].get()
-        # Call the database function
-        success = self.app.db.add_contacts(fornavn, etternavn, adresse, postnr)
-        window.destroy()
-        if success:
-            messagebox.showinfo("Success", "Contact added successfully!")
-            self.show()  # Refresh the contacts view
-        else:
-            messagebox.showerror("Error", "Failed to add contact.")
         try:
-            # Collect all the values from the entries
             fornavn = entries["Fornavn"].get().strip()
             etternavn = entries["Etternavn"].get().strip()
             adresse = entries["Adresse"].get().strip()
             postnr = entries["PostNr"].get().strip()
-            
-            # Validate required fields
             if not fornavn or not etternavn:
                 messagebox.showerror("Error", "First name and last name are required")
                 return
-
-            # Add the contact to the database
             if self.app.db.add_contacts(fornavn, etternavn, adresse, postnr):
-                # Refresh the view
                 self.show()
                 window.destroy()
                 messagebox.showinfo("Success", "Contact added successfully!")
@@ -270,20 +248,14 @@ class ContactsView:
 
     def save_edited_contact(self, entries, current_data, window):
         try:
-            # Collect all the values from the entries
             fornavn = entries["Fornavn"].get().strip()
             etternavn = entries["Etternavn"].get().strip()
             adresse = entries["Adresse"].get().strip()
             postnr = entries["PostNr"].get().strip()
-            
-            # Validate required fields
             if not fornavn or not etternavn:
                 messagebox.showerror("Error", "First name and last name are required")
                 return
-
-            # Update the contact in the database
             if self.app.db.edit_contacts(current_data["KNr"], fornavn, etternavn, adresse, postnr):
-                # Refresh the view
                 self.show()
                 window.destroy()
                 messagebox.showinfo("Success", "Contact updated successfully!")
@@ -293,97 +265,19 @@ class ContactsView:
             messagebox.showerror("Error", f"Failed to update contact: {str(e)}")
 
     def remove_selected_contact(self):
-        # Get selected item from the treeview
-        tree = self.app.content.winfo_children()[1].winfo_children()[0]  # Assumes treeview is always in this position
-        selected = tree.selection()
-        if not selected:
-            messagebox.showwarning("Warning", "No contact selected.")
-            return
-        # Get KNr from the selected row (assumes KNr is the first column)
-        knr = tree.item(selected[0])['values'][0]
-        if messagebox.askyesno("Confirm", "Are you sure you want to remove this contact?"):
-            success = self.app.db.remove_contacts(knr)
-            if success:
-                messagebox.showinfo("Success", "Contact removed successfully!")
-                self.show()  # Refresh the contacts view
-            else:
-                messagebox.showerror("Error", "Failed to remove contact.")
-
-    def edit_selected_contact(self):
-        # Get selected item from the treeview
-        tree = self.app.content.winfo_children()[1].winfo_children()[0]  # Assumes treeview is always in this position
-        selected = tree.selection()
-        if not selected:
-            messagebox.showwarning("Warning", "No contact selected.")
-            return
-        # Get current values
-        values = tree.item(selected[0])['values']
-        columns = tree["columns"]
-        # Create popup for editing
-        win = tk.Toplevel(self.app.root)
-        win.geometry("400x500")
-        self.app.register_popup(win)
-        win.title("Edit Contact")
-        form_frame = ttk.Frame(win, padding=10)
-        form_frame.pack(fill=tk.BOTH, expand=True)
-        fields = ["Firstname", "Lastname", "Address", "ZIP Code"]
-        entries = {}
-        # Map columns to fields
-        col_map = {
-            "Firstname": "Fornavn",
-            "Lastname": "Etternavn",
-            "Address": "Adresse",
-            "ZIP Code": "PostNr"
-        }
-        # Find index of each column
-        col_indices = {col: columns.index(col_map[col]) for col in fields if col_map[col] in columns}
-        for field in fields:
-            frame = ttk.Frame(form_frame)
-            frame.pack(fill=tk.X, pady=5)
-            ttk.Label(frame, text=f"{field}:").pack(side=tk.LEFT)
-            entry = ttk.Entry(frame)
-            # Pre-fill with current value
-            idx = col_indices.get(field)
-            if idx is not None:
-                entry.insert(0, values[idx])
-            entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
-            entries[field] = entry
-        button_frame = ttk.Frame(form_frame)
-        button_frame.pack(fill=tk.X, pady=(20, 0))
-        def save_edit():
-            fornavn = entries["Firstname"].get()
-            etternavn = entries["Lastname"].get()
-            adresse = entries["Address"].get()
-            postnr = entries["ZIP Code"].get()
-            knr = values[0]  # Assumes KNr is the first column
-            success = self.app.db.edit_contacts(knr, fornavn, etternavn, adresse, postnr)
-            win.destroy()
-            if success:
-                messagebox.showinfo("Success", "Contact updated successfully!")
-                self.show()  # Refresh the contacts view
-            else:
-                messagebox.showerror("Error", "Failed to update contact.")
-        ttk.Button(button_frame, text="Save", command=save_edit).pack(side=tk.RIGHT, padx=5)
-        ttk.Button(button_frame, text="Cancel", command=win.destroy).pack(side=tk.RIGHT)
         selected = self.tree.focus()
         if not selected:
-            messagebox.showwarning("Warning", "Please select a contact to remove")
+            messagebox.showwarning("Warning", "No contact selected.")
             return
-
-        # Get the current values
         current_values = self.tree.item(selected)['values']
         columns = self.tree["columns"]
         current_data = dict(zip(columns, current_values))
-
-        # Confirm deletion
-        if messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete this contact?"):
+        if messagebox.askyesno("Confirm", "Are you sure you want to remove this contact?"):
             try:
-                # Remove the contact from the database
                 if self.app.db.remove_contacts(current_data["KNr"]):
-                    # Refresh the view
                     self.show()
-                    messagebox.showinfo("Success", "Contact deleted successfully!")
+                    messagebox.showinfo("Success", "Contact removed successfully!")
                 else:
-                    messagebox.showerror("Error", "Failed to delete contact")
+                    messagebox.showerror("Error", "Failed to remove contact.")
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to delete contact: {str(e)}")
+                messagebox.showerror("Error", f"Failed to remove contact: {str(e)}")
