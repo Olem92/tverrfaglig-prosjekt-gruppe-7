@@ -37,6 +37,6 @@ NO_EN_TRANSLATION = {
     "Quantity": "Quantity",
     "Price per Item": "Price Per Item",
     "Price total": "Total Price",
-    "Katnr": "Category Number",
+    "KatNr": "Category Number",
     "Hylle": "Shelf",
 }

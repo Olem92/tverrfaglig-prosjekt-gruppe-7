@@ -21,8 +21,47 @@ class OrdersView:
         search_var = tk.StringVar()
         selected_column = tk.StringVar(value="All")
 
+        # Create search entry with placeholder
         search_entry = ttk.Entry(search_frame, textvariable=search_var)
         search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # Add placeholder text
+        search_entry.insert(0, "Search...")
+        search_entry.config(foreground='grey')
+        
+        # Function to handle placeholder behavior
+        def on_focus_in(event):
+            if search_entry.get() == "Search...":
+                search_entry.delete(0, tk.END)
+                search_entry.config(foreground='black')
+        
+        def on_focus_out(event):
+            if not search_entry.get():
+                search_entry.insert(0, "Search...")
+                search_entry.config(foreground='grey')
+        
+        # Function to clear search
+        def clear_search():
+            search_entry.delete(0, tk.END)
+            search_entry.insert(0, "Search...")
+            search_entry.config(foreground='grey')
+            
+            # Clear and reload the treeview
+            for item in tree.get_children():
+                tree.delete(item)
+            
+            # Reinsert all orders
+            for item in orders_data:
+                values = [item[col] for col in columns]
+                tree.insert("", tk.END, values=values)
+        
+        # Bind focus events
+        search_entry.bind('<FocusIn>', on_focus_in)
+        search_entry.bind('<FocusOut>', on_focus_out)
+        
+        # Add clear button
+        clear_button = ttk.Button(search_frame, text="✕", width=3, command=clear_search)
+        clear_button.pack(side=tk.LEFT, padx=(5, 0))
 
         column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")
         column_dropdown.pack(side=tk.LEFT, padx=(5, 0))
@@ -48,7 +87,9 @@ class OrdersView:
                 return
             columns = list(orders_data[0].keys())
             tree["columns"] = columns
-            column_dropdown["values"] = ["All"] + columns
+            # Create a mapping of translated column names to original column names
+            column_mapping = {NO_EN_TRANSLATION.get(col, col): col for col in columns}
+            column_dropdown["values"] = ["All"] + list(column_mapping.keys())  # Populate dropdown with translated column names
             tree.column("#0", width=0, stretch=tk.NO)
             for col in columns:
                 tree.column(col, anchor=tk.CENTER, width=100)
@@ -65,8 +106,18 @@ class OrdersView:
 
             # Search funksjonalitet
             def on_search_change(*_):
+                search_text = search_var.get()
+                # Don't search if the text is the placeholder or empty
+                if search_text == "Search..." or not search_text:
+                    # Show all items
+                    for item in tree.get_children():
+                        tree.item(item, tags=())
+                    return
+                
                 col = selected_column.get()
-                self.app.filter_tree(tree, orders_data, search_var.get(), column=None if col == "All" else col)
+                # Convert translated column name back to original column name for filtering
+                original_col = column_mapping.get(col, col) if col != "All" else None
+                self.app.filter_tree(tree, orders_data, search_text, column=original_col)
             search_var.trace_add("write", on_search_change)
             selected_column.trace_add("write", on_search_change)
         except Exception as e:
