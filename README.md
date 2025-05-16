@@ -1,39 +1,39 @@
-# 📦 Warehouse Mini ERP System
+# 📦 **Warehouse Mini ERP System**
 
-Welcome to the **Warehouse Mini ERP System** – a modern, user-friendly solution for managing your warehouse's inventory, orders, and contacts. This project is developed by Group 7 as a school project and is designed for easy deployment and use in educational or small business environments.
-
----
-
-## 🚀 Features
-
-- **Inventory Management:** Track stock levels, search and filter products, and keep your warehouse organized.
-- **Order Handling:** View, search, and manage customer orders with ease and accuracy.
-- **Contact Directory:** Maintain a searchable list of customers.
-- **Contact Management:** Add, edit, and remove customers quickly via a web interface or desktop GUI.
-- **Modern Web Interface:** Responsive design with FastAPI, Jinja2 templates, and custom CSS.
-- **Desktop GUI:** Tkinter-based application for local management.
+Welcome to the **Warehouse Mini ERP System** – a modern, user-friendly solution for managing your warehouse's inventory, orders, and contacts.
 
 ---
 
-## 🛠️ Installation
+## 🚀 **Features**
 
-### 1. Clone the Repository
+- 🗃️ **Inventory Management:** Track stock levels, search and filter products, and keep your warehouse organized.
+- 📦 **Order Handling:** View, search, and manage customer orders with ease and accuracy.
+- 📇 **Contact Directory:** Maintain a searchable list of customers.
+- ✏️ **Contact Management:** Add, edit, and remove customers via web or desktop GUI.
+- 🌐 **Modern Web Interface:** FastAPI, Jinja2 templates, and custom CSS.
+- 🖥️ **Desktop GUI:** Tkinter-based application for local management.
+
+---
+
+## 🛠️ **Installation**
+
+### 1️⃣ Clone the Repository
 
 ```bash
 git clone https://github.com/your-org/tverrfaglig-prosjekt-gruppe-7.git
 cd tverrfaglig-prosjekt-gruppe-7
 ```
 
-### 2. Install Python & MySQL
+### 2️⃣ Install Python & MySQL
 
-- **Python 3.10+**: [Download Python](https://www.python.org/downloads/)
-- **MySQL Server**: [Download MySQL](https://dev.mysql.com/downloads/installer/)
+- [Python 3.10+](https://www.python.org/downloads/)
+- [MySQL Server](https://dev.mysql.com/downloads/installer/)
 
-### 3. Configure Database Access
+### 3️⃣ Configure Database Access
 
 Add a `.env` file in the root directory with your MySQL credentials, or use the provided `.env` example as a template:
 
-```
+```env
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=your_mysql_user
@@ -43,7 +43,7 @@ DB_NAME=varehusdb
 
 ---
 
-### 4. Install Dependencies & Set Up Database
+### 4️⃣ Install Dependencies & Set Up Database
 
 Install Python dependencies:
 
@@ -57,15 +57,14 @@ Set up your MySQL database by running the SQL script in your MySQL client:
 mysql -u your_mysql_user -p varehusdb < sql-db/varehusdb.sql
 ```
 
-Alternatively run the contents of 'varehusdb.sql' in a query manually, this can be found at:
+_Alternatively, run the contents of `varehusdb.sql` manually. File location:_
 ```
-tverrfaglig-prosjekt-gruppe-7/
-└── sql-db/varehusdb.sql
+tverrfaglig-prosjekt-gruppe-7/sql-db/varehusdb.sql
 ```
 
 ---
 
-## 🏃 Usage
+## 🏃 **Usage**
 
 Start the application (web and desktop GUI):
 
@@ -75,9 +74,9 @@ python app.py
 
 ---
 
-## 📚 Project Structure
+## 📚 **Project Structure**
 
-```
+```text
 tverrfaglig-prosjekt-gruppe-7/
 ├── app.py                # Tkinter GUI & FastAPI web server
 ├── api.py                # API endpoints
@@ -92,7 +91,7 @@ tverrfaglig-prosjekt-gruppe-7/
 
 ---
 
-## ⚙️ Key Components
+## ⚙️ **Key Components**
 
 - **SQL Schema:**
   - Tables for inventory, orders, contacts, etc.
@@ -107,9 +106,28 @@ tverrfaglig-prosjekt-gruppe-7/
 
 ---
 
-## 🧪 Testing & Debugging
+## 🧪 **Testing & Debugging**
 
-- All core features (add/edit/remove/search contacts) are tested in both web and desktop GUIs.
-- Error messages are shown for failed operations (e.g., DB connection issues).
+- ✅ All core features (add/edit/remove/search contacts) are tested in both web and desktop GUIs.
+- ⚠️ Error messages are shown for failed operations (e.g., DB connection issues).
 
 ---
+
+## 💡 **Tips for a Great README on GitHub**
+
+- Use **headings** and **lists** for structure.
+- Add **emojis** for visual interest.
+- Use **code blocks** for commands and file paths.
+- Keep instructions clear and concise.
+
+---
+
+## 🤝 **Credits**
+
+Developed by Group 7, 2025. For questions or contributions, please open an issue or pull request.
+
+---
+
+## 📄 **License**
+
+This project is licensed for educational use. See LICENSE for details.
