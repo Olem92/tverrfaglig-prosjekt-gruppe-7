@@ -4,3 +4,4 @@ pillow
 mysql-connector-python
 python-dotenv
 jinja2
+reportlab

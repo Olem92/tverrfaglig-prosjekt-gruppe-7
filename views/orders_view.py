@@ -2,6 +2,12 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from views.translations.no_en_translation import NO_EN_TRANSLATION
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
+import datetime
+import webbrowser
+import os
 
 class OrdersView:
     def __init__(self, app):
@@ -227,3 +233,86 @@ class OrdersView:
             total_row.pack(fill=tk.X, pady=(10, 2))
             ttk.Label(total_row, text=f"{total_sum:,.2f}", anchor=tk.E, font=("Helvetica", 10)).pack(side=tk.RIGHT)
             ttk.Label(total_row, text="Total:", width=12, anchor=tk.E, font=("Helvetica", 10)).pack(side=tk.RIGHT)
+
+        # Add PDF export button (bottom left)
+        def generate_pdf_and_open():
+            self.generate_invoice_pdf(order_dict)
+        pdf_btn = ttk.Button(frame, text="Generate Invoice PDF", command=generate_pdf_and_open)
+        pdf_btn.pack(side=tk.LEFT, anchor=tk.SW, pady=8)
+
+    def generate_invoice_pdf(self, order_dict):
+        order_id = order_dict.get("OrdreNr") or list(order_dict.values())[0]
+        contents = self.app.db.get_order_contents(order_id)
+        if not contents:
+            messagebox.showerror("PDF Error", "No order contents found.")
+            return
+        customer_name = f"{contents[0].get('Fornavn', '')} {contents[0].get('Etternavn', '')}".strip()
+        customer_address = contents[0].get('Adresse', '')
+        customer_zip = contents[0].get('PostNr', '')
+        order_date = order_dict.get('OrdreDato', str(datetime.date.today()))
+        pdf_dir = os.path.join(os.path.dirname(__file__), '..', 'pdf-exports')
+        os.makedirs(pdf_dir, exist_ok=True)
+        pdf_path = os.path.abspath(os.path.join(pdf_dir, f"invoice_{order_id}.pdf"))
+        c = canvas.Canvas(pdf_path, pagesize=A4)
+        width, height = A4
+        y = height - 30 * mm
+        # Add logo to top right
+        logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'icons', 'gpt-logo.png'))
+        if os.path.exists(logo_path):
+            try:
+                c.drawImage(logo_path, width - 50 * mm, height - 35 * mm, width=30 * mm, height=30 * mm, preserveAspectRatio=True, mask='auto')
+            except Exception as e:
+                print(f"Could not add logo: {e}")
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(20 * mm, y, "INVOICE")
+        y -= 12 * mm
+        c.setFont("Helvetica", 10)
+        c.drawString(20 * mm, y, f"Order #: {order_id}")
+        c.drawString(100 * mm, y, f"Date: {order_date}")
+        y -= 8 * mm
+        c.drawString(20 * mm, y, f"Customer: {customer_name}")
+        y -= 6 * mm
+        c.drawString(20 * mm, y, f"Address: {customer_address}")
+        y -= 6 * mm
+        c.drawString(20 * mm, y, f"ZIP: {customer_zip}")
+        y -= 12 * mm
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(20 * mm, y, "Item")
+        c.drawString(70 * mm, y, "Item No.")
+        c.drawString(100 * mm, y, "Qty")
+        c.drawString(120 * mm, y, "Unit Price")
+        c.drawString(150 * mm, y, "Total")
+        y -= 6 * mm
+        c.setFont("Helvetica", 10)
+        total_sum = 0
+        for item in contents:
+            item_name = item.get("VareNavn") or item.get("Betegnelse") or item.get("Item") or ""
+            part_number = item.get("VNr") or item.get("ol.VNr") or item.get("Item Number") or ""
+            quantity = item.get("Antall") or item.get("Quantity") or 0
+            price_per_item = (
+                item.get("PrisPrEnhet") or item.get("PrisprEnhet") or item.get("PrisEnhet") or item.get("Price per Item") or 0
+            )
+            try:
+                quantity_val = float(quantity)
+            except Exception:
+                quantity_val = 0
+            try:
+                price_per_item_val = float(price_per_item)
+            except Exception:
+                price_per_item_val = 0
+            price_total = price_per_item_val * quantity_val
+            total_sum += price_total
+            c.drawString(20 * mm, y, str(item_name))
+            c.drawString(70 * mm, y, str(part_number))
+            c.drawRightString(110 * mm, y, str(int(quantity_val) if quantity_val == int(quantity_val) else quantity_val))
+            c.drawRightString(135 * mm, y, f"{price_per_item_val:,.2f}")
+            c.drawRightString(180 * mm, y, f"{price_total:,.2f}")
+            y -= 6 * mm
+            if y < 30 * mm:
+                c.showPage()
+                y = height - 30 * mm
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(120 * mm, y-4*mm, "Total:")
+        c.drawRightString(180 * mm, y-4*mm, f"{total_sum:,.2f}")
+        c.save()
+        webbrowser.open_new(pdf_path)
