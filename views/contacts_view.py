@@ -5,6 +5,7 @@ from views.translations.no_en_translation import NO_EN_TRANSLATION
 class ContactsView:
     def __init__(self, app):
         self.app = app  # Reference to the main application instance
+        self.tree = None  # Store reference to treeview for updates
 
     def show(self):
         # Fjern all tidligere innhold, slik at det er plass til nytt vindu
@@ -44,13 +45,13 @@ class ContactsView:
             search_entry.config(foreground='grey')
             
             # Clear and reload the treeview
-            for item in tree.get_children():
-                tree.delete(item)
+            for item in self.tree.get_children():
+                self.tree.delete(item)
             
             # Reinsert all contacts
             for item in contacts_data:
                 values = [item[col] for col in columns]
-                tree.insert("", tk.END, values=values)
+                self.tree.insert("", tk.END, values=values)
         
         # Bind focus events
         search_entry.bind('<FocusIn>', on_focus_in)
@@ -66,10 +67,10 @@ class ContactsView:
         ## Treeview aka Popups
         tree_frame = ttk.Frame(self.app.content)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        tree = ttk.Treeview(tree_frame)  # Main table for contacts
-        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)  # Vertical scrollbar
-        tree.configure(yscrollcommand=scrollbar.set)
-        tree.pack(side="left", fill=tk.BOTH, expand=True)
+        self.tree = ttk.Treeview(tree_frame)  # Main table for contacts
+        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)  # Vertical scrollbar
+        self.tree.configure(yscrollcommand=scrollbar.set)
+        self.tree.pack(side="left", fill=tk.BOTH, expand=True)
         scrollbar.pack(side="right", fill="y")
 
         ## Button frame for Add and Remove buttons
@@ -78,6 +79,9 @@ class ContactsView:
         
         add_button = ttk.Button(button_frame, text="Add Contact", command=self.show_add_contact_popup)
         add_button.pack(side=tk.LEFT, padx=(0, 5))
+        
+        edit_button = ttk.Button(button_frame, text="Edit Contact", command=self.show_edit_contact_popup)
+        edit_button.pack(side=tk.LEFT, padx=(0, 5))
         
         remove_button = ttk.Button(button_frame, text="Remove Contact", command=self.remove_selected_contact)
         remove_button.pack(side=tk.LEFT)
@@ -91,23 +95,23 @@ class ContactsView:
                 ttk.Label(tree_frame, text="No contact data available").pack()
                 return
             columns = list(contacts_data[0].keys())  # Extract column names fra første record
-            tree["columns"] = columns  # Set columns for the treeview
+            self.tree["columns"] = columns  # Set columns for the treeview
             # Create a mapping of translated column names to original column names
             column_mapping = {NO_EN_TRANSLATION.get(col, col): col for col in columns}
             column_dropdown["values"] = ["All"] + list(column_mapping.keys())  # Populate dropdown with translated column names
-            tree.column("#0", width=0, stretch=tk.NO)  # Hide the default first column
+            self.tree.column("#0", width=0, stretch=tk.NO)  # Hide the default first column
             for col in columns:
-                tree.column(col, anchor=tk.CENTER, width=100)  # Set column width and alignment
+                self.tree.column(col, anchor=tk.CENTER, width=100)  # Set column width and alignment
                 # Use translation if available, otherwise use the original column name
                 translated_col = NO_EN_TRANSLATION.get(col, col)
-                tree.heading(col, text=translated_col, anchor=tk.CENTER)  # Set column heading
+                self.tree.heading(col, text=translated_col, anchor=tk.CENTER)  # Set column heading
             for item in contacts_data:
                 values = [item[col] for col in columns]  # Extract values for each row
-                tree.insert("", tk.END, values=values)  # Insert row into treeview
+                self.tree.insert("", tk.END, values=values)  # Insert row into treeview
             
             # Bind double-click event to show a popup with contact details
             self.app.bind_treeview_double_click(
-                tree, columns,
+                self.tree, columns,
                 lambda item_dict: self.show_details_popup("Contact Details", item_dict)
             )
            
@@ -118,15 +122,15 @@ class ContactsView:
                 # Don't search if the text is the placeholder or empty
                 if search_text == "Search..." or not search_text:
                     # Show all items
-                    for item in tree.get_children():
-                        tree.item(item, tags=())
+                    for item in self.tree.get_children():
+                        self.tree.item(item, tags=())
                     return
                 
                 col = selected_column.get()
                 # Convert translated column name back to original column name for filtering
                 original_col = column_mapping.get(col, col) if col != "All" else None
                 # Filter the treeview based on search query and selected column
-                self.app.filter_tree(tree, contacts_data, search_text, column=original_col)
+                self.app.filter_tree(self.tree, contacts_data, search_text, column=original_col)
             
             search_var.trace_add("write", on_search_change)  # React to typing in search box
             selected_column.trace_add("write", on_search_change)  # React to column dropdown changes
@@ -164,14 +168,13 @@ class ContactsView:
         form_frame.pack(fill=tk.BOTH, expand=True)
         
         # Add a label and entry for each field
-        # This is a basic structure - you can modify the fields based on your needs
-        fields = ["Firstname", "Lastname", "Address", "ZIP Code"]
+        fields = ["Fornavn", "Etternavn", "Adresse", "PostNr"]
         entries = {}
         
         for field in fields:
             frame = ttk.Frame(form_frame)
             frame.pack(fill=tk.X, pady=5)
-            ttk.Label(frame, text=f"{field}:").pack(side=tk.LEFT)
+            ttk.Label(frame, text=f"{NO_EN_TRANSLATION.get(field, field)}:").pack(side=tk.LEFT)
             entry = ttk.Entry(frame)
             entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
             entries[field] = entry
@@ -183,13 +186,116 @@ class ContactsView:
         ttk.Button(button_frame, text="Save", command=lambda: self.save_new_contact(entries, win)).pack(side=tk.RIGHT, padx=5)
         ttk.Button(button_frame, text="Cancel", command=win.destroy).pack(side=tk.RIGHT)
 
+    def show_edit_contact_popup(self):
+        selected = self.tree.focus()
+        if not selected:
+            messagebox.showwarning("Warning", "Please select a contact to edit")
+            return
+
+        # Get the current values
+        current_values = self.tree.item(selected)['values']
+        columns = self.tree["columns"]
+        current_data = dict(zip(columns, current_values))
+
+        # Create a popup window for editing the contact
+        win = tk.Toplevel(self.app.root)
+        win.geometry("400x500")
+        self.app.register_popup(win)
+        win.title("Edit Contact")
+        
+        # Create a frame for the form
+        form_frame = ttk.Frame(win, padding=10)
+        form_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Add a label and entry for each field
+        fields = ["Fornavn", "Etternavn", "Adresse", "PostNr"]
+        entries = {}
+        
+        for field in fields:
+            frame = ttk.Frame(form_frame)
+            frame.pack(fill=tk.X, pady=5)
+            ttk.Label(frame, text=f"{NO_EN_TRANSLATION.get(field, field)}:").pack(side=tk.LEFT)
+            entry = ttk.Entry(frame)
+            entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+            # Set current value
+            entry.insert(0, str(current_data.get(field, "")))
+            entries[field] = entry
+        
+        # Add buttons at the bottom
+        button_frame = ttk.Frame(form_frame)
+        button_frame.pack(fill=tk.X, pady=(20, 0))
+        
+        ttk.Button(button_frame, text="Save", command=lambda: self.save_edited_contact(entries, current_data, win)).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=win.destroy).pack(side=tk.RIGHT)
+
     def save_new_contact(self, entries, window):
-        # This is a placeholder for the save functionality
-        # You can implement the actual save logic later
-        window.destroy()
-        messagebox.showinfo("Success", "Contact added successfully!")
+        try:
+            # Collect all the values from the entries
+            fornavn = entries["Fornavn"].get().strip()
+            etternavn = entries["Etternavn"].get().strip()
+            adresse = entries["Adresse"].get().strip()
+            postnr = entries["PostNr"].get().strip()
+            
+            # Validate required fields
+            if not fornavn or not etternavn:
+                messagebox.showerror("Error", "First name and last name are required")
+                return
+
+            # Add the contact to the database
+            if self.app.db.add_contacts(fornavn, etternavn, adresse, postnr):
+                # Refresh the view
+                self.show()
+                window.destroy()
+                messagebox.showinfo("Success", "Contact added successfully!")
+            else:
+                messagebox.showerror("Error", "Failed to add contact")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to add contact: {str(e)}")
+
+    def save_edited_contact(self, entries, current_data, window):
+        try:
+            # Collect all the values from the entries
+            fornavn = entries["Fornavn"].get().strip()
+            etternavn = entries["Etternavn"].get().strip()
+            adresse = entries["Adresse"].get().strip()
+            postnr = entries["PostNr"].get().strip()
+            
+            # Validate required fields
+            if not fornavn or not etternavn:
+                messagebox.showerror("Error", "First name and last name are required")
+                return
+
+            # Update the contact in the database
+            if self.app.db.edit_contacts(current_data["KNr"], fornavn, etternavn, adresse, postnr):
+                # Refresh the view
+                self.show()
+                window.destroy()
+                messagebox.showinfo("Success", "Contact updated successfully!")
+            else:
+                messagebox.showerror("Error", "Failed to update contact")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update contact: {str(e)}")
 
     def remove_selected_contact(self):
-        # This is a placeholder for the remove functionality
-        # You can implement the actual remove logic later
-        messagebox.showinfo("Info", "Remove functionality will be implemented later")
+        selected = self.tree.focus()
+        if not selected:
+            messagebox.showwarning("Warning", "Please select a contact to remove")
+            return
+
+        # Get the current values
+        current_values = self.tree.item(selected)['values']
+        columns = self.tree["columns"]
+        current_data = dict(zip(columns, current_values))
+
+        # Confirm deletion
+        if messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete this contact?"):
+            try:
+                # Remove the contact from the database
+                if self.app.db.remove_contacts(current_data["KNr"]):
+                    # Refresh the view
+                    self.show()
+                    messagebox.showinfo("Success", "Contact deleted successfully!")
+                else:
+                    messagebox.showerror("Error", "Failed to delete contact")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to delete contact: {str(e)}")
