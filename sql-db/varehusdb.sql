@@ -298,4 +298,39 @@ BEGIN
     WHERE ol.OrdreNr = order_id;
 END$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `AddContacts`(
+    IN p_Fornavn VARCHAR(50),
+    IN p_Etternavn VARCHAR(50),
+    IN p_Adresse VARCHAR(100),
+    IN p_PostNr CHAR(4)
+)
+BEGIN
+    INSERT INTO kunde (Fornavn, Etternavn, Adresse, PostNr)
+    VALUES (p_Fornavn, p_Etternavn, p_Adresse, p_PostNr);
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `EditContacts`(
+    IN p_KNr INT,
+    IN p_Fornavn VARCHAR(50),
+    IN p_Etternavn VARCHAR(50),
+    IN p_Adresse VARCHAR(100),
+    IN p_PostNr CHAR(4)
+)
+BEGIN
+    UPDATE kunde
+    SET Fornavn = p_Fornavn,
+        Etternavn = p_Etternavn,
+        Adresse = p_Adresse,
+        PostNr = p_PostNr
+    WHERE KNr = p_KNr;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `RemoveContacts`(
+    IN p_KNr INT
+)
+BEGIN
+    DELETE FROM kunde
+    WHERE KNr = p_KNr;
+END$$
+
 DELIMITER ; 
