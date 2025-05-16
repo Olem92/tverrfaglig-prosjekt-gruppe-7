@@ -60,6 +60,52 @@
             gap: 0.5em;
             justify-content: center;
         }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.3);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 2em;
+            border-radius: 8px;
+            min-width: 320px;
+            box-shadow: 0 2px 16px #888;
+            position: relative;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+        }
+        .modal-content label {
+            display: block;
+            margin-top: 1em;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 0.5em;
+            margin-top: 0.3em;
+            font-size: 1em;
+        }
+        .modal-close {
+            position: absolute;
+            top: 0.5em;
+            right: 0.7em;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .modal-actions {
+            margin-top: 1.5em;
+            display: flex;
+            gap: 1em;
+            justify-content: flex-end;
+        }
     </style>
 </head>
 <body>
@@ -92,10 +138,37 @@
             <div id="contacts-table"></div>
         </div>
     </main>
+    <!-- Modal for Add/Edit -->
+    <div id="contact-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h3 id="modal-title">Add Contact</h3>
+            <form id="contact-form">
+                <input type="hidden" id="modal-knr">
+                <label>First Name
+                    <input type="text" id="modal-fornavn" required>
+                </label>
+                <label>Last Name
+                    <input type="text" id="modal-etternavn" required>
+                </label>
+                <label>Address
+                    <input type="text" id="modal-adresse" required>
+                </label>
+                <label>Post Code
+                    <input type="text" id="modal-postnr" required maxlength="4">
+                </label>
+                <div class="modal-actions">
+                    <button type="submit" class="erp-btn" id="modal-save-btn">Save</button>
+                    <button type="button" class="erp-btn" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <footer></footer>
     <script>
         let allData = [];
         let columns = [];
+        let editMode = false; // false = add, true = edit
 
         function renderTable(data) {
             let html = '<table><tr>';
@@ -104,17 +177,16 @@
                 columns.forEach(key => {
                     html += `<th>${key}</th>`;
                 });
-                html += '<th>Actions</th></tr>'; // Add Actions column header
+                html += '<th>Actions</th></tr>';
                 data.forEach(contact => {
                     html += '<tr>';
                     columns.forEach(col => {
                         html += `<td>${contact[col]}</td>`;
                     });
-                    // Add Edit and Delete buttons with erp-btn class and group
                     html += `<td>
                         <div class="actions-btn-group">
-                            <button class="edit-btn erp-btn" data-id="${contact[columns[0]]}">Edit</button>
-                            <button class="delete-btn erp-btn" data-id="${contact[columns[0]]}">Delete</button>
+                            <button class="edit-btn erp-btn" data-id="${contact.KNr}">Edit</button>
+                            <button class="delete-btn erp-btn" data-id="${contact.KNr}">Delete</button>
                         </div>
                     </td>`;
                     html += '</tr>';
@@ -136,19 +208,22 @@
                 });
             }
 
-            // Add event listeners for Edit and Delete buttons (optional, for future use)
+            // Add event listeners for Edit and Delete buttons
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.onclick = function() {
                     const id = this.getAttribute('data-id');
-                    // Implement edit logic here
-                    alert('Edit row with ID: ' + id);
+                    const contact = allData.find(c => c.KNr == id);
+                    openModal(true, contact);
                 };
             });
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.onclick = function() {
                     const id = this.getAttribute('data-id');
-                    // Implement delete logic here
-                    alert('Delete row with ID: ' + id);
+                    if (confirm("Are you sure you want to delete this contact?")) {
+                        fetch(`/api/contacts/${id}`, { method: 'DELETE' })
+                            .then(res => res.json())
+                            .then(() => loadTable());
+                    }
                 };
             });
         }
@@ -166,14 +241,63 @@
         }
 
         document.getElementById('refresh-btn').onclick = loadTable;
-
         document.getElementById('searchInput').addEventListener('input', filterTable);
         document.getElementById('searchColumn').addEventListener('change', filterTable);
 
-        // NEW CONTACT BUTTON
+        // Modal logic
         document.getElementById('add-new-btn').onclick = function() {
-            // ADD LOGIC HERE
-            alert('Add new contact');
+            openModal(false);
+        };
+
+        function openModal(isEdit, contact = null) {
+            editMode = isEdit;
+            document.getElementById('contact-modal').style.display = 'flex';
+            document.getElementById('modal-title').textContent = isEdit ? 'Edit Contact' : 'Add Contact';
+            document.getElementById('contact-form').reset();
+            if (isEdit && contact) {
+                document.getElementById('modal-knr').value = contact.KNr;
+                document.getElementById('modal-fornavn').value = contact.Fornavn;
+                document.getElementById('modal-etternavn').value = contact.Etternavn;
+                document.getElementById('modal-adresse').value = contact.Adresse;
+                document.getElementById('modal-postnr').value = contact.PostNr;
+            } else {
+                document.getElementById('modal-knr').value = '';
+            }
+        }
+        function closeModal() {
+            document.getElementById('contact-modal').style.display = 'none';
+        }
+
+        document.getElementById('contact-form').onsubmit = function(e) {
+            e.preventDefault();
+            const knr = document.getElementById('modal-knr').value;
+            const fornavn = document.getElementById('modal-fornavn').value;
+            const etternavn = document.getElementById('modal-etternavn').value;
+            const adresse = document.getElementById('modal-adresse').value;
+            const postnr = document.getElementById('modal-postnr').value;
+            if (editMode) {
+                fetch(`/api/contacts/${knr}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({fornavn, etternavn, adresse, postnr})
+                })
+                .then(res => res.json())
+                .then(() => {
+                    closeModal();
+                    loadTable();
+                });
+            } else {
+                fetch('/api/contacts', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({fornavn, etternavn, adresse, postnr})
+                })
+                .then(res => res.json())
+                .then(() => {
+                    closeModal();
+                    loadTable();
+                });
+            }
         };
 
         function filterTable() {
