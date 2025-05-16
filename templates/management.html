@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Contacts - Warehouse Mini CRM</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .table-container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2em 0 1em 0;
+            width: 100%;
+        }
+        .header-row h2 {
+            margin: 0;
+            font-size: 1.5em;
+            flex: 1;
+            text-align: left;
+        }
+        .search-bar-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+        .search-bar-group input, .search-bar-group select {
+            padding: 0.5em;
+            font-size: 1em;
+        }
+        table {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Warehouse Mini ERP System</h1>
+        <nav>
+            <button id="home-btn" title="Home" onclick="location.href='/'">
+                <img src="/icons/home.png" alt="Home">
+            </button>
+            <button onclick="location.href='/orders'">Orders</button>
+            <button onclick="location.href='/inventory'">Inventory</button>
+            <button onclick="location.href='/contacts'">Contacts</button>
+            <button id="refresh-btn" title="Refresh">
+                <img src="/icons/refresh.png" alt="Refresh">
+            </button>
+        </nav>
+    </header>
+    <main>
+        <div class="table-container">
+            <div class="header-row">
+                <h2 style="display:inline-block; vertical-align:middle;">
+                    Manage Contacts
+                    <a href="/management.html" title="📝 Edit Contacts" style="margin-left:0.5em; vertical-align:middle;">
+                    </a>
+                </h2>
+                <div class="search-bar-group">
+                    <input type="text" id="searchInput" placeholder="Search contacts...">
+                    <select id="searchColumn"></select>
+                </div>
+            </div>
+            <div id="contacts-table"></div>
+        </div>
+    </main>
+    <footer></footer>
+</body>
+</html>

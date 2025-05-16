@@ -34,6 +34,11 @@ async def inventory_page(request: Request):
 async def contacts_page(request: Request):
     return templates.TemplateResponse("contacts.html", {"request": request})
 
+## FastAPI henter kontakter fra databasen
+@app.get("/management", response_class=HTMLResponse)
+async def contacts_page(request: Request):
+    return templates.TemplateResponse("management.html", {"request": request})
+
 ## FastAPI kobler til og henter data fra databasen
 @app.on_event("startup")
 def connect_to_db():
