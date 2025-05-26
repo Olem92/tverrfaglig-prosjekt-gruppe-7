@@ -14,3 +14,4 @@ views/translations/__pycache__/no_en_translation.cpython-313.pyc
 views/_*
 views/*.pyc
 
+pdf-exports/invoice_20516.pdf
