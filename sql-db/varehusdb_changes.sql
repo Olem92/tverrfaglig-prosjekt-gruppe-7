@@ -2,7 +2,6 @@
 USE varehusdb;
 
 DELIMITER $$
-USE `varehusdb`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `ShowInventory`()
 BEGIN
     SELECT * FROM varehusdb.vare;
@@ -85,7 +84,7 @@ BEGIN
 
     -- Delete the order lines
     DELETE ol FROM `varehusdb`.`ordrelinje` ol
-                       INNER JOIN `varehusdb`.`ordrae` o ON ol.OrdreNr = o.OrdreNr
+                       INNER JOIN `varehusdb`.`ordre` o ON ol.OrdreNr = o.OrdreNr
     WHERE o.KNr = p_KNr;
 
     -- Count and delete all orders from this customer
