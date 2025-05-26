@@ -62,6 +62,8 @@ _Alternatively, run the contents of `varehusdb.sql` manually. File location:_
 tverrfaglig-prosjekt-gruppe-7/sql-db/varehusdb.sql
 ```
 
+
+
 #### Add Stored Procedures and changes to the Database:
 
 Run the contents of the `varehusdb_changes.sql` either through your MySQL client or manually in a query:
