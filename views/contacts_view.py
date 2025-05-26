@@ -4,30 +4,30 @@ from views.translations.no_en_translation import NO_EN_TRANSLATION
 
 class ContactsView:
     def __init__(self, app):
-        self.app = app  # Reference to the main application instance
-        self.tree = None  # Store reference to treeview for updates
+        self.app = app  # Referanse til hovedapplikasjonen
+        self.tree = None  # Referanse til treeview for oppdateringer
 
     def show(self):
-        # Fjern all tidligere innhold, slik at det er plass til nytt vindu
+        # Fjerner alt tidligere innhold slik at nytt vindu kan vises
         for widget in self.app.content.winfo_children():
             widget.destroy()
-        self.app.current_view = "contacts"  # Set current view for refresh logic
+        self.app.current_view = "contacts"  # Angir nåværende visning for oppdateringslogikk
 
         ## Søkefelt-funksjonalitet
         search_frame = ttk.Frame(self.app.content)
         search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
-        search_var = tk.StringVar()  # Holds the search query
-        selected_column = tk.StringVar(value="All")  # Holds the selected column for filtering
+        search_var = tk.StringVar()  # Holder søketeksten
+        selected_column = tk.StringVar(value="All")  # Holder valgt kolonne for filtrering
         
-        # Create search entry with placeholder
+        # Lager søkefelt med plassholder
         search_entry = ttk.Entry(search_frame, textvariable=search_var)
         search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
-        # Add placeholder text
+        # Legger til plassholdertekst
         search_entry.insert(0, "Search...")
         search_entry.config(foreground='grey')
         
-        # Function to handle placeholder behavior
+        # Funksjon for å håndtere plassholder ved fokus
         def on_focus_in(event):
             if search_entry.get() == "Search...":
                 search_entry.delete(0, tk.END)
@@ -38,42 +38,40 @@ class ContactsView:
                 search_entry.insert(0, "Search...")
                 search_entry.config(foreground='grey')
         
-        # Function to clear search
+        # Funksjon for å tømme søkefeltet og oppdatere treeview
         def clear_search():
             search_entry.delete(0, tk.END)
             search_entry.insert(0, "Search...")
             search_entry.config(foreground='grey')
             
-            # Clear and reload the treeview
             for item in self.tree.get_children():
                 self.tree.delete(item)
             
-            # Reinsert all contacts
             for item in contacts_data:
                 values = [item[col] for col in columns]
                 self.tree.insert("", tk.END, values=values)
         
-        # Bind focus events
+        # Binder vindu i fokus
         search_entry.bind('<FocusIn>', on_focus_in)
         search_entry.bind('<FocusOut>', on_focus_out)
         
-        # Add clear button
+        # Legger til knapp for å tømme søk
         clear_button = ttk.Button(search_frame, text="✕", width=3, command=clear_search)
         clear_button.pack(side=tk.LEFT, padx=(5, 0))
         
-        column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")  # Dropdown for columns
+        column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")  # Nedtrekksmeny for kolonner
         column_dropdown.pack(side=tk.LEFT, padx=(5, 0))
 
-        ## Treeview aka Popups
+        ## Treeview (tabell med kontakter)
         tree_frame = ttk.Frame(self.app.content)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        self.tree = ttk.Treeview(tree_frame)  # Main table for contacts
-        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)  # Vertical scrollbar
+        self.tree = ttk.Treeview(tree_frame)  # Hovedtabell for kontakter
+        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)  # Vertikal rullefelt
         self.tree.configure(yscrollcommand=scrollbar.set)
         self.tree.pack(side="left", fill=tk.BOTH, expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        ## Button frame for Add and Remove buttons
+        ## Knapperamme for Legg til, Rediger og Fjern
         button_frame = ttk.Frame(self.app.content)
         button_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
         
@@ -86,88 +84,88 @@ class ContactsView:
         remove_button = ttk.Button(button_frame, text="Remove Contact", command=self.remove_selected_contact)
         remove_button.pack(side=tk.LEFT)
         
-        ## Henter info til tabell/GUI
+        ## Henter informasjon til tabell/GUI
         try:
-            # Fetch all contacts from the database
+            # Henter alle kontakter fra databasen
             contacts_data = self.app.db.get_contacts()
             if not contacts_data:
-                # Show message if no data is available
+                # Viser melding hvis ingen data er tilgjengelig
                 ttk.Label(tree_frame, text="No contact data available").pack()
                 return
-            columns = list(contacts_data[0].keys())  # Extract column names fra første record
-            self.tree["columns"] = columns  # Set columns for the treeview
-            # Create a mapping of translated column names to original column names
+            columns = list(contacts_data[0].keys())  # Henter kolonnenavn
+            self.tree["columns"] = columns
+            # Lager mapping fra oversatte kolonnenavn
             column_mapping = {NO_EN_TRANSLATION.get(col, col): col for col in columns}
-            column_dropdown["values"] = ["All"] + list(column_mapping.keys())  # Populate dropdown with translated column names
-            self.tree.column("#0", width=0, stretch=tk.NO)  # Hide the default first column
+            column_dropdown["values"] = ["All"] + list(column_mapping.keys())  # Fyller nedtrekksmeny med oversatte kolonnenavn
+            self.tree.column("#0", width=0, stretch=tk.NO)  # Skjuler første kolonne
             for col in columns:
-                self.tree.column(col, anchor=tk.CENTER, width=100)  # Set column width and alignment
-                # Use translation if available, otherwise use the original column name
+                self.tree.column(col, anchor=tk.CENTER, width=100)  # Setter bredde
+                # Bruker oversettelse hvis tilgjengelig
                 translated_col = NO_EN_TRANSLATION.get(col, col)
-                self.tree.heading(col, text=translated_col, anchor=tk.CENTER)  # Set column heading
+                self.tree.heading(col, text=translated_col, anchor=tk.CENTER)  # Setter kolonneoverskrift
             for item in contacts_data:
-                values = [item[col] for col in columns]  # Extract values for each row
-                self.tree.insert("", tk.END, values=values)  # Insert row into treeview
+                values = [item[col] for col in columns]  # Henter verdier for hver rad
+                self.tree.insert("", tk.END, values=values)  # Legger til rad i treeview
             
-            # Bind double-click event to show a popup with contact details
+            # Binder dobbeltklikk for å vise popup med kontaktinfo
             self.app.bind_treeview_double_click(
                 self.tree, columns,
                 lambda item_dict: self.show_details_popup("Contact Details", item_dict)
             )
            
-            ## Søkelogikk slik at den er "realtime"
+            ## Søkelogikk slik at søk skjer "live"
             def on_search_change(*_):
-                # Called whenever search or column selection changes
+                # Kalles når søk eller kolonnevalg endres
                 search_text = search_var.get()
-                # Don't search if the text is the placeholder or empty
+                # Ikke søk hvis tekstboks er tom
                 if search_text == "Search..." or not search_text:
-                    # Show all items
+                    # Viser alle rader
                     for item in self.tree.get_children():
                         self.tree.item(item, tags=())
                     return
                 
                 col = selected_column.get()
-                # Convert translated column name back to original column name for filtering
+                # Konverterer oversatt kolonnenavn tilbake til originalt for filtrering
                 original_col = column_mapping.get(col, col) if col != "All" else None
-                # Filter the treeview based on search query and selected column
+                # Filtrerer treeview basert på søk og valgt kolonne
                 self.app.filter_tree(self.tree, contacts_data, search_text, column=original_col)
             
-            search_var.trace_add("write", on_search_change)  # React to typing in search box
-            selected_column.trace_add("write", on_search_change)  # React to column dropdown changes
+            search_var.trace_add("write", on_search_change)  # Reagerer på skriving i søkefelt
+            selected_column.trace_add("write", on_search_change)  # Reagerer på endring i kolonnevalg
         
         except Exception as e:
-            # Show error popup if something goes wrong
+            # Viser feilmelding hvis noe går galt
             messagebox.showerror("Error", f"Failed to load contacts: {str(e)}")
 
     def show_details_popup(self, title, item_dict):
-        # Show a popup window with all details for a contact
+        # Viser popup-vindu med alle detaljer for en kontakt
         win = tk.Toplevel(self.app.root)
-        win.geometry("800x600")  # Set a reasonable size for the popup
-        self.app.register_popup(win)  # Register popup for bulk close support
+        win.geometry("800x600")  # Setter størrelse på popup
+        self.app.register_popup(win)  # Registrerer popup for lukking
         win.title(title)
         frame = ttk.Frame(win, padding=10)
         frame.pack(fill=tk.BOTH, expand=True)
-        # Display each key-value pair in the contact as a row
+        # Viser hver nøkkel-verdi som en rad
         for key, value in item_dict.items():
             row = ttk.Frame(frame)
             row.pack(fill=tk.X, pady=2)
-            # Use translation if available, otherwise use the original key
+            # Bruker oversettelse hvis tilgjengelig, ellers original nøkkel
             translated_key = NO_EN_TRANSLATION.get(key, key)
             ttk.Label(row, text=f"{translated_key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
             ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
 
     def show_add_contact_popup(self):
-        # Create a popup window for adding a new contact
+        # Lager popup-vindu for å legge til ny kontakt
         win = tk.Toplevel(self.app.root)
         win.geometry("400x500")
         self.app.register_popup(win)
         win.title("Add New Contact")
         
-        # Create a frame for the form
+        # Lager ramme for skjema
         form_frame = ttk.Frame(win, padding=10)
         form_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Add a label and entry for each field
+        # Legger til etikett og felt for hver kolonne
         fields = ["Fornavn", "Etternavn", "Adresse", "PostNr"]
         entries = {}
         
@@ -179,7 +177,7 @@ class ContactsView:
             entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
             entries[field] = entry
         
-        # Add buttons at the bottom
+        # Legger til knapper nederst
         button_frame = ttk.Frame(form_frame)
         button_frame.pack(fill=tk.X, pady=(20, 0))
         
@@ -192,22 +190,22 @@ class ContactsView:
             messagebox.showwarning("Warning", "Please select a contact to edit")
             return
 
-        # Get the current values
+        # Henter nåværende verdier
         current_values = self.tree.item(selected)['values']
         columns = self.tree["columns"]
         current_data = dict(zip(columns, current_values))
 
-        # Create a popup window for editing the contact
+        # Lager popup-vindu for å redigere kontakt
         win = tk.Toplevel(self.app.root)
         win.geometry("400x500")
         self.app.register_popup(win)
         win.title("Edit Contact")
         
-        # Create a frame for the form
+        # Lager ramme for skjema
         form_frame = ttk.Frame(win, padding=10)
         form_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Add a label and entry for each field
+        # Legger til etikett og felt for hver kolonne
         fields = ["Fornavn", "Etternavn", "Adresse", "PostNr"]
         entries = {}
         
@@ -217,17 +215,18 @@ class ContactsView:
             ttk.Label(frame, text=f"{NO_EN_TRANSLATION.get(field, field)}:").pack(side=tk.LEFT)
             entry = ttk.Entry(frame)
             entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
-            # Set current value
+            # Setter nåværende verdi
             entry.insert(0, str(current_data.get(field, "")))
             entries[field] = entry
         
-        # Add buttons at the bottom
+        # Legger til knapper nederst
         button_frame = ttk.Frame(form_frame)
         button_frame.pack(fill=tk.X, pady=(20, 0))
         
         ttk.Button(button_frame, text="Save", command=lambda: self.save_edited_contact(entries, current_data, win)).pack(side=tk.RIGHT, padx=5)
         ttk.Button(button_frame, text="Cancel", command=win.destroy).pack(side=tk.RIGHT)
 
+    # Funksjon for å lagre ny kontakt
     def save_new_contact(self, entries, window):
         try:
             fornavn = entries["Fornavn"].get().strip()
@@ -245,7 +244,8 @@ class ContactsView:
                 messagebox.showerror("Error", "Failed to add contact")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to add contact: {str(e)}")
-
+    
+    # Funksjon for å lagre redigert kontakt
     def save_edited_contact(self, entries, current_data, window):
         try:
             fornavn = entries["Fornavn"].get().strip()
@@ -264,6 +264,7 @@ class ContactsView:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update contact: {str(e)}")
 
+    # Funksjon for å fjerne valgt kontakt
     def remove_selected_contact(self):
         selected = self.tree.focus()
         if not selected:

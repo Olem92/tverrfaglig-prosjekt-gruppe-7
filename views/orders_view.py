@@ -1,4 +1,4 @@
-## Noe spesiell i forhold til de andre på grunn av furnksjonalitet rundt popups
+## Noe spesiell i forhold til de andre på grunn av furnksjonalitet rundt popups og pdf-generering
 import tkinter as tk
 from tkinter import ttk, messagebox
 from views.translations.no_en_translation import NO_EN_TRANSLATION
@@ -11,31 +11,31 @@ import os
 
 class OrdersView:
     def __init__(self, app):
-        self.app = app  # Reference to main App instance
+        self.app = app
 
     def show(self):
-        # Clear existing content
+        # Fjerner all tidligere innhold, slik at det er plass til nytt vindu
         for widget in self.app.content.winfo_children():
             widget.destroy()
 
         self.app.current_view = "orders"
 
-        # Search bar
+        # Søkefelt
         search_frame = ttk.Frame(self.app.content)
         search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
 
         search_var = tk.StringVar()
         selected_column = tk.StringVar(value="All")
 
-        # Create search entry with placeholder
+        # Lager søkefelt med placeholder
         search_entry = ttk.Entry(search_frame, textvariable=search_var)
         search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
-        # Add placeholder text
+        # Legger til placeholder-tekst
         search_entry.insert(0, "Search...")
         search_entry.config(foreground='grey')
         
-        # Function to handle placeholder behavior
+        # Funksjon for å håndtere placeholder
         def on_focus_in(event):
             if search_entry.get() == "Search...":
                 search_entry.delete(0, tk.END)
@@ -46,46 +46,44 @@ class OrdersView:
                 search_entry.insert(0, "Search...")
                 search_entry.config(foreground='grey')
         
-        # Function to clear search
+        # Funksjon for å tømme søk og vise alle rader på nytt
         def clear_search():
             search_entry.delete(0, tk.END)
             search_entry.insert(0, "Search...")
             search_entry.config(foreground='grey')
             
-            # Clear and reload the treeview
             for item in tree.get_children():
                 tree.delete(item)
             
-            # Reinsert all orders
             for item in orders_data:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
         
-        # Bind focus events
+        # Binder aktivt vindu
         search_entry.bind('<FocusIn>', on_focus_in)
         search_entry.bind('<FocusOut>', on_focus_out)
         
-        # Add clear button
+        # Legger til clear-knapp
         clear_button = ttk.Button(search_frame, text="✕", width=3, command=clear_search)
         clear_button.pack(side=tk.LEFT, padx=(5, 0))
 
         column_dropdown = ttk.Combobox(search_frame, textvariable=selected_column, state="readonly")
         column_dropdown.pack(side=tk.LEFT, padx=(5, 0))
 
-        # Create frame for Treeview
+        # Lager ramme for treeview
         tree_frame = ttk.Frame(self.app.content)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Create Treeview with scrollbar
+        # Lager treeview med scrollbar
         tree = ttk.Treeview(tree_frame)
         scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
 
-        # Pack the Treeview and scrollbar
+        # Lager Treeview med kolonner
         tree.pack(side="left", fill=tk.BOTH, expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Hent ordre fra databasen
+        # Henter ordre fra databasen
         try:
             orders_data = self.app.db.get_orders()
             if not orders_data:
@@ -93,13 +91,13 @@ class OrdersView:
                 return
             columns = list(orders_data[0].keys())
             tree["columns"] = columns
-            # Create a mapping of translated column names to original column names
+            # Lager en mapping for kolonnenavn for oversettelse
             column_mapping = {NO_EN_TRANSLATION.get(col, col): col for col in columns}
-            column_dropdown["values"] = ["All"] + list(column_mapping.keys())  # Populate dropdown with translated column names
+            column_dropdown["values"] = ["All"] + list(column_mapping.keys())  # Populerer dropdown med oversatte kolonnenavn
             tree.column("#0", width=0, stretch=tk.NO)
             for col in columns:
                 tree.column(col, anchor=tk.CENTER, width=100)
-                # Use translation if available, otherwise use the original column name
+                # Bruker oversettelse hvis tilgjengelig
                 translated_col = NO_EN_TRANSLATION.get(col, col)
                 tree.heading(col, text=translated_col, anchor=tk.CENTER)
             for item in orders_data:
@@ -110,18 +108,18 @@ class OrdersView:
                 lambda item_dict: self.show_order_details_popup(item_dict)
             )
 
-            # Search funksjonalitet
+            # Søkefunksjonalitet
             def on_search_change(*_):
                 search_text = search_var.get()
-                # Don't search if the text is the placeholder or empty
+                # Søker ikke dersom søketekst er tom
                 if search_text == "Search..." or not search_text:
-                    # Show all items
+                    # Viser alle rader
                     for item in tree.get_children():
                         tree.item(item, tags=())
                     return
                 
                 col = selected_column.get()
-                # Convert translated column name back to original column name for filtering
+                # Konverterer kolonnenavn
                 original_col = column_mapping.get(col, col) if col != "All" else None
                 self.app.filter_tree(tree, orders_data, search_text, column=original_col)
             search_var.trace_add("write", on_search_change)
@@ -133,13 +131,13 @@ class OrdersView:
     def show_order_details_popup(self, order_dict):
         win = tk.Toplevel(self.app.root)
         self.app.register_popup(win)        ## registrer popup-vindu
-        # Use order number in the title if available
+        # Bruker ordernummer som tittel
         order_id = order_dict.get("OrdreNr") or list(order_dict.values())[0]
         win.title(f"{order_id} Order Contents")
         frame = ttk.Frame(win, padding=10)
         frame.pack(fill=tk.BOTH, expand=True)
 
-        # Create a top frame for two-column layout (customer left, order info right)
+        # Lager top frame med to kolonner
         top_frame = ttk.Frame(frame)
         top_frame.pack(fill=tk.X, pady=(0, 10))
         left_frame = ttk.Frame(top_frame)
@@ -147,7 +145,7 @@ class OrdersView:
         right_frame = ttk.Frame(top_frame)
         right_frame.pack(side=tk.LEFT, fill=tk.Y, anchor=tk.N)
 
-        # Fetch order contents (which now includes Fornavn, Etternavn, Adresse, PostNr)
+        # Henter ordreinnhold og kundeinformasjon
         contents = self.app.db.get_order_contents(order_id)
         if contents and 'Fornavn' in contents[0] and 'Etternavn' in contents[0]:
             customer_name = f"{contents[0]['Fornavn']} {contents[0]['Etternavn']}"
@@ -162,7 +160,7 @@ class OrdersView:
         else:
             customer_zip = "Unknown"
 
-        # Show customer info in left column
+        # Viser kundeinformasjon i venstre kolonne
         row = ttk.Frame(left_frame)
         row.pack(fill=tk.X, pady=2)
         ttk.Label(row, text="Name:", width=12, anchor=tk.W).pack(side=tk.LEFT)
@@ -176,17 +174,17 @@ class OrdersView:
         ttk.Label(row, text="ZIP Code:", width=12, anchor=tk.W).pack(side=tk.LEFT)
         ttk.Label(row, text=customer_zip, anchor=tk.W).pack(side=tk.LEFT)
 
-        # Show order info in right column
+        # Viser ordreinformasjon i høyre kolonne
         for key in ["OrdreNr", "KNr", "OrdreDato", "SendtDato", "BetaltDato"]:
             value = order_dict.get(key, "")
             row = ttk.Frame(right_frame)
             row.pack(fill=tk.X, pady=2)
-            # Use translation if available, otherwise use the original key
+            # Bruker oversettelse hvis tilgjengelig, ellers original
             translated_key = NO_EN_TRANSLATION.get(key, key)
             ttk.Label(row, text=f"{translated_key}:", width=16, anchor=tk.W).pack(side=tk.LEFT)
             ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
 
-        # Show order contents below both columns
+        # Vis ordreinnhold under begge kolonnene
         contents = self.app.db.get_order_contents(order_id)
         if not contents:
             ttk.Label(frame, text="No contents found for this order.").pack()
@@ -205,18 +203,22 @@ class OrdersView:
             for item in contents:
                 item_name = item.get("VareNavn") or item.get("Betegnelse") or item.get("Item") or ""
                 part_number = item.get("VNr") or item.get("ol.VNr") or item.get("Item Number") or ""
+                # Hent antall og pris per enhet fra ordrens varelinje (forskjellige mulige feltnavn)
                 quantity = item.get("Antall") or item.get("Quantity") or 0
                 price_per_item = (
                     item.get("PrisPrEnhet") or item.get("PrisprEnhet") or item.get("PrisEnhet") or item.get("Price per Item") or 0
                 )
                 try:
+                    # Forsøk å konvertere antall til float
                     quantity_val = float(quantity)
                 except Exception:
                     quantity_val = 0
                 try:
+                    # Forsøk å konvertere pris per enhet til float
                     price_per_item_val = float(price_per_item)
                 except Exception:
                     price_per_item_val = 0
+                # Beregn totalpris for denne varelinjen
                 price_total = price_per_item_val * quantity_val
                 total_sum += price_total
                 values = [
@@ -228,24 +230,26 @@ class OrdersView:
                 ]
                 tree.insert("", tk.END, values=values)
 
-            # Totalsum helt i bunn, right-aligned, same font/size as order info rows
+            # Totalsum nederst, høyrejustert, samme font/størrelse som ordreinformasjon
             total_row = ttk.Frame(frame)
             total_row.pack(fill=tk.X, pady=(10, 2))
             ttk.Label(total_row, text=f"{total_sum:,.2f}", anchor=tk.E, font=("Helvetica", 10)).pack(side=tk.RIGHT)
             ttk.Label(total_row, text="Total:", width=12, anchor=tk.E, font=("Helvetica", 10)).pack(side=tk.RIGHT)
 
-        # Add PDF export button (bottom left)
+        # Legg til knapp for PDF-eksport (nederst til venstre)
         def generate_pdf_and_open():
             self.generate_invoice_pdf(order_dict)
         pdf_btn = ttk.Button(frame, text="Generate Invoice PDF", command=generate_pdf_and_open)
         pdf_btn.pack(side=tk.LEFT, anchor=tk.SW, pady=8)
 
     def generate_invoice_pdf(self, order_dict):
+        # Lager PDF-faktura for valgt ordre og åpner den
         order_id = order_dict.get("OrdreNr") or list(order_dict.values())[0]
         contents = self.app.db.get_order_contents(order_id)
         if not contents:
             messagebox.showerror("PDF Error", "No order contents found.")
             return
+        # Hent kundeinformasjon fra første varelinje
         customer_name = f"{contents[0].get('Fornavn', '')} {contents[0].get('Etternavn', '')}".strip()
         customer_address = contents[0].get('Adresse', '')
         customer_zip = contents[0].get('PostNr', '')
@@ -256,7 +260,7 @@ class OrdersView:
         c = canvas.Canvas(pdf_path, pagesize=A4)
         width, height = A4
         y = height - 30 * mm
-        # Add logo to top right
+        # Legg til logo øverst til høyre
         logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'icons', 'gpt-logo.png'))
         if os.path.exists(logo_path):
             try:

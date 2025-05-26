@@ -10,23 +10,23 @@ class InventoryView:
     # Fjern all tidligere innhold, slik at det er plass til nytt vindu
         for widget in self.app.content.winfo_children():
             widget.destroy()
-        self.app.current_view = "inventory"     # Set current view for refresh logic
+        self.app.current_view = "inventory"     # Setter current view til inventory (refresh funksjon)
         
         ## Søkefelt-funksjonalitet
         search_frame = ttk.Frame(self.app.content)
         search_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
-        search_var = tk.StringVar()             ## Search Query
-        selected_column = tk.StringVar(value="All")              ## Holds the selected column, slik man kan filtrere
+        search_var = tk.StringVar()
+        selected_column = tk.StringVar(value="All")
         
-        # Create search entry with placeholder
+        # Lag søkefelt og dropdown for kolonner
         search_entry = ttk.Entry(search_frame, textvariable=search_var)
         search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
-        # Add placeholder text
+        # Legg til placeholder-tekst
         search_entry.insert(0, "Search...")
         search_entry.config(foreground='grey')
         
-        # Function to handle placeholder behavior
+        # Funksjon for å håndtere fokus på søkefeltet
         def on_focus_in(event):
             if search_entry.get() == "Search...":
                 search_entry.delete(0, tk.END)
@@ -37,26 +37,25 @@ class InventoryView:
                 search_entry.insert(0, "Search...")
                 search_entry.config(foreground='grey')
         
-        # Function to clear search
+        # Funksjon for å tømme søkefeltet
         def clear_search():
             search_entry.delete(0, tk.END)
             search_entry.insert(0, "Search...")
             search_entry.config(foreground='grey')
             
-            # Clear and reload the treeview
             for item in tree.get_children():
                 tree.delete(item)
             
-            # Reinsert all inventory items
+            # Oppdaterer tabell med ny data
             for item in inventory_data:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
         
-        # Bind focus events
+        # Binder fokus til søkefeltet
         search_entry.bind('<FocusIn>', on_focus_in)
         search_entry.bind('<FocusOut>', on_focus_out)
         
-        # Add clear button
+        # Legger til knapp for å tømme søkefeltet
         clear_button = ttk.Button(search_frame, text="✕", width=3, command=clear_search)
         clear_button.pack(side=tk.LEFT, padx=(5, 0))
 
@@ -76,27 +75,27 @@ class InventoryView:
         try:
             inventory_data = self.app.db.get_inventory()
             if not inventory_data:
-                ## Show message if no data is avaliable
+                ## Viser feilmelding hvis ingen data er tilgjengelig
                 ttk.Label(tree_frame, text="No inventory data available").pack()
                 return
             
-            columns = list(inventory_data[0].keys())    # Extract column names fra første record
-            tree["columns"] = columns                   ## Colomns til treeview
-            # Create a mapping of translated column names to original column names
+            columns = list(inventory_data[0].keys())    # Henterer kolonnenavn fra første rad
+            tree["columns"] = columns                   ## Kolonnenavn i tabellen
+            # Lager mapping for oversettelse av kolonnenavn
             column_mapping = {NO_EN_TRANSLATION.get(col, col): col for col in columns}
-            column_dropdown["values"] = ["All"] + list(column_mapping.keys())  # Populate dropdown with translated column names
-            tree.column("#0", width=0, stretch=tk.NO)       # Hide first column
+            column_dropdown["values"] = ["All"] + list(column_mapping.keys())  # Legger til "All" som standard filtrering i søkefelt
+            tree.column("#0", width=0, stretch=tk.NO)
             
             for col in columns:
-                tree.column(col, anchor=tk.CENTER, width=100)       # Set column width and headings
-                # Use translation if available, otherwise use the original column name
+                tree.column(col, anchor=tk.CENTER, width=100)       # Setter bredde på kolonnene
+                # Bruker oversettelse hvis tilgjengelig
                 translated_col = NO_EN_TRANSLATION.get(col, col)
                 tree.heading(col, text=translated_col, anchor=tk.CENTER)
             for item in inventory_data:
                 values = [item[col] for col in columns]
                 tree.insert("", tk.END, values=values)
 
-            # Bind double click event to show popup with contact details
+            # Binder dobbeltklikk på rader for å vise detaljer
             self.app.bind_treeview_double_click(
                 tree, columns,
                 lambda item_dict: self.show_details_popup("Inventory Item Details", item_dict)
@@ -105,40 +104,35 @@ class InventoryView:
             ## Søkelogikk slik at den er "realtime"
             def on_search_change(*_):
                 search_text = search_var.get()
-                # Don't search if the text is the placeholder or empty
+                # Søker ikke om søkefeltet er tomt
                 if search_text == "Search..." or not search_text:
-                    # Show all items
+                    # Viser alle elementer fra søket
                     for item in tree.get_children():
                         tree.item(item, tags=())
                     return
                 
                 col = selected_column.get()
-                # Convert translated column name back to original column name for filtering
                 original_col = column_mapping.get(col, col) if col != "All" else None
-                # Filter the treeview
                 self.app.filter_tree(tree, inventory_data, search_text, column=original_col)
 
-            # Realtime!
             search_var.trace_add("write", on_search_change)
             selected_column.trace_add("write", on_search_change)
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load inventory: {str(e)}")
 
+    ## Viser detaljer i popup-vindu
     def show_details_popup(self, title, item_dict):
-        # Show a popup windows with all details
         win = tk.Toplevel(self.app.root)
-        win.geometry("800x600")  # Set a reasonable size for the popup
-        self.app.register_popup(win)    ## Register popup for bulk close support
+        win.geometry("800x600")  # Setter vindusstørrelse
+        self.app.register_popup(win)    ## Registerer popup-vinduet, slik alle kan lukkes med knapp i meny
         win.title(title)
         frame = ttk.Frame(win, padding=10)
         frame.pack(fill=tk.BOTH, expand=True)
         
-        # Display each key value pair in the contact as a row
         for key, value in item_dict.items():
             row = ttk.Frame(frame)
             row.pack(fill=tk.X, pady=2)
-            # Use translation if available, otherwise use the original key
             translated_key = NO_EN_TRANSLATION.get(key, key)
             ttk.Label(row, text=f"{translated_key}:", width=20, anchor=tk.W).pack(side=tk.LEFT)
             ttk.Label(row, text=str(value), anchor=tk.W).pack(side=tk.LEFT)
