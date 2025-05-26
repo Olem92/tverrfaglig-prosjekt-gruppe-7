@@ -20,7 +20,7 @@ Welcome to the **Warehouse Mini ERP System** – a modern, user-friendly solutio
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/tverrfaglig-prosjekt-gruppe-7.git
+git clone https://github.com/Olem92/tverrfaglig-prosjekt-gruppe-7.git
 cd tverrfaglig-prosjekt-gruppe-7
 ```
 
@@ -45,13 +45,13 @@ DB_NAME=varehusdb
 
 ### 4️⃣ Install Dependencies & Set Up Database
 
-Install Python dependencies:
+#### Install Python dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Set up your MySQL database by running the SQL script in your MySQL client:
+#### Set up your MySQL database by running the SQL script in your MySQL client:
 
 ```bash
 mysql -u your_mysql_user -p varehusdb < sql-db/varehusdb.sql
@@ -60,6 +60,13 @@ mysql -u your_mysql_user -p varehusdb < sql-db/varehusdb.sql
 _Alternatively, run the contents of `varehusdb.sql` manually. File location:_
 ```
 tverrfaglig-prosjekt-gruppe-7/sql-db/varehusdb.sql
+```
+
+#### Add Stored Procedures and changes to the Database:
+
+Run the contents of the `varehusdb_changes.sql` either through your MySQL client or manually in a query:
+```bash
+mysql -u your_mysql_user -p varehusdb < sql-db/varehusdb_changes.sql
 ```
 
 ---
@@ -78,15 +85,16 @@ python app.py
 
 ```text
 tverrfaglig-prosjekt-gruppe-7/
-├── app.py                # Tkinter GUI & FastAPI web server
-├── api.py                # API endpoints
-├── database.py           # DB connection logic
-├── requirements.txt      # Python dependencies
-├── sql-db/varehusdb.sql  # MySQL schema & procedures
-├── views/                # Tkinter GUI modules
-├── templates/            # Jinja2 HTML templates
-├── static/               # CSS & static files
-└── .env                  # Environment variables
+├── app.py                         # Tkinter GUI & FastAPI web server
+├── api.py                         # API endpoints and calls
+├── database.py                    # DB connection logic and functions
+├── requirements.txt               # Python dependencies
+├── sql-db/varehusdb.sql           # Sample database
+├── sql-db/varehusdb_changes.sql   # Stored Procedures and database changes
+├── views/                         # Tkinter GUI modules
+├── templates/                     # FastAPI Jinja2 HTML templates
+├── static/                        # CSS & Image files
+└── .env                           # Environment variables
 ```
 
 ---
@@ -102,7 +110,7 @@ tverrfaglig-prosjekt-gruppe-7/
 - **Frontend:**
   - Jinja2 templates for web UI.
   - Tkinter for desktop GUI.
-  - HTML templates pushed with data through API.
+  - HTML templates pushed through FastAPI.
 
 ---
 
@@ -113,18 +121,9 @@ tverrfaglig-prosjekt-gruppe-7/
 
 ---
 
-## 💡 **Tips for a Great README on GitHub**
-
-- Use **headings** and **lists** for structure.
-- Add **emojis** for visual interest.
-- Use **code blocks** for commands and file paths.
-- Keep instructions clear and concise.
-
----
-
 ## 🤝 **Credits**
 
-Developed by Group 7, 2025. For questions or contributions, please open an issue or pull request.
+Developed by 24ITDNett Group 7, 2025. For questions or contributions, please open an issue or pull request.
 
 ---
 
