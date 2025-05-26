@@ -1,4 +1,5 @@
 -- VÅRE CHANGES --
+USE varehusdb;
 
 DELIMITER $$
 USE `varehusdb`$$
@@ -69,12 +70,12 @@ END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `RemoveContacts`(IN p_KNr INT)
 BEGIN
-    -- Start a transaction to ensure data integrity
-    START TRANSACTION;
-    
-    -- Store count of affected records for reporting
+    -- Declare variables at the very start
     DECLARE order_count INT DEFAULT 0;
     DECLARE orderline_count INT DEFAULT 0;
+
+    -- Start a transaction to ensure data integrity
+    START TRANSACTION;
     
     -- First, count and delete all order lines associated with this customer's orders
     SELECT COUNT(*) INTO orderline_count 
@@ -84,7 +85,7 @@ BEGIN
     
     -- Delete the order lines
     DELETE ol FROM `varehusdb`.`ordrelinje` ol
-    INNER JOIN `varehusdb`.`ordre` o ON ol.OrdreNr = o.OrdreNr
+    INNER JOIN `varehusdb`.`ordrae` o ON ol.OrdreNr = o.OrdreNr
     WHERE o.KNr = p_KNr;
     
     -- Count and delete all orders from this customer
@@ -109,7 +110,5 @@ BEGIN
         'Deleted successfully' AS Status,
         order_count AS OrdersRemoved,
         orderline_count AS OrderLinesRemoved;
-    
-    
 END$$
-DELIMITER ; 
+DELIMITER ;
